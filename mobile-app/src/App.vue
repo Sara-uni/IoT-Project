@@ -8,12 +8,26 @@
     <ion-content>
       <ion-card>
         <ion-card-header>
-          <ion-card-title>Sensore Temperatura</ion-card-title>
+          <ion-card-title>Temperature</ion-card-title>
         </ion-card-header>
         <ion-card-content>
-          <ion-label>Temperatura attuale:</ion-label>
-          <h2>{{ temperature }} °C</h2>
-          <ion-button @click="refreshTemperature">Aggiorna</ion-button>
+          <LineChart :data="temperature" scale-y="Temperature (°C)" />
+        </ion-card-content>
+      </ion-card>
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>Ambient Light</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <LineChart :data="ambientLight" scale-y="Light (lux)" />
+        </ion-card-content>
+      </ion-card>
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>Ambient Noise</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <LineChart :data="ambientNoise" scale-y="Noise (dB)" />
         </ion-card-content>
       </ion-card>
       <ion-card>
@@ -32,7 +46,6 @@
 <script setup>
 import { ref } from "vue";
 import {
-  IonButton,
   IonCard,
   IonCardContent,
   IonCardHeader,
@@ -43,19 +56,53 @@ import {
   IonTitle,
   IonToolbar,
   IonToggle,
-  IonLabel,
 } from "@ionic/vue";
+import LineChart from "./components/LineChart.vue";
 
-const temperature = ref(22.5);
+const temperature = ref({
+  labels: ["08:00", "10:00", "12:00", "14:00", "16:00", "18:00"],
+  datasets: [
+    {
+      backgroundColor: "rgba(75, 192, 192, 0.2)",
+      borderColor: "rgba(75, 192, 192, 1)",
+      data: ["20.0", "23.0", "22.0", "24.0", "21.0", "25.0", "26.0"],
+      tension: 0.4,
+      fill: true,
+    },
+  ],
+});
+const ambientLight = ref({
+  labels: ["08:00", "10:00", "12:00", "14:00", "16:00", "18:00"],
+  datasets: [
+    {
+      backgroundColor: "rgba(255, 153, 0, 0.2)",
+      borderColor: "rgba(255, 153, 0, 1)",
+      data: [50, 200, 800, 1000, 600, 100],
+      tension: 0.4,
+      fill: true,
+    },
+  ],
+});
+const ambientNoise = ref({
+  labels: ["08:00", "10:00", "12:00", "14:00", "16:00", "18:00"],
+  datasets: [
+    {
+      backgroundColor: "rgba(206, 77, 255, 0.2)",
+      borderColor: "rgba(206, 77, 255, 1)",
+      data: [30, 45, 50, 60, 55, 40],
+      tension: 0.4,
+      fill: true,
+    },
+  ],
+});
+
 const ledStatus = ref(false);
 
 const refreshTemperature = () => {
-  // Simula un'API IoT per ottenere la temperatura
   temperature.value = (Math.random() * 10 + 20).toFixed(1);
 };
 
 const toggleLed = () => {
-  // Simula l'invio dello stato LED all'API IoT
   console.log(`LED Status: ${ledStatus.value ? "On" : "Off"}`);
 };
 </script>
