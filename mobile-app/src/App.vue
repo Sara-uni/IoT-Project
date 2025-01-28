@@ -6,34 +6,22 @@
       </ion-toolbar>
     </ion-header>
     <ion-content>
-      <ion-card>
-        <ion-card-header>
-          <ion-card-title>Temperature</ion-card-title>
-        </ion-card-header>
-        <ion-card-content>
-          <LineChart
-            :data="temperature"
-            scale-y="Temperature (°C)"
-            :new-data="lastTemperature"
-          />
-        </ion-card-content>
-      </ion-card>
-      <ion-card>
-        <ion-card-header>
-          <ion-card-title>Ambient Light</ion-card-title>
-        </ion-card-header>
-        <ion-card-content>
-          <LineChart :data="ambientLight" scale-y="Light (lux)" />
-        </ion-card-content>
-      </ion-card>
-      <ion-card>
-        <ion-card-header>
-          <ion-card-title>Ambient Noise</ion-card-title>
-        </ion-card-header>
-        <ion-card-content>
-          <LineChart :data="ambientNoise" scale-y="Noise (dB)" />
-        </ion-card-content>
-      </ion-card>
+      <LineChart
+        title="Temperature"
+        :data="temperature"
+        scale-y="Temperature (°C)"
+        :new-data="lastTemperature"
+      />
+      <LineChart
+        title="Ambient Light"
+        :data="ambientLight"
+        scale-y="Light (lux)"
+      />
+      <LineChart
+        title="Ambient Noise"
+        :data="ambientNoise"
+        scale-y="Noise (dB)"
+      />
       <ion-card>
         <ion-card-header>
           <ion-card-title>Controllo LED</ion-card-title>
@@ -76,24 +64,24 @@ const temperature = {
   ],
 };
 const ambientLight = ref({
-  labels: ["08:00", "10:00", "12:00", "14:00", "16:00", "18:00"],
+  labels: [],
   datasets: [
     {
       backgroundColor: "rgba(255, 153, 0, 0.2)",
       borderColor: "rgba(255, 153, 0, 1)",
-      data: [50, 200, 800, 1000, 600, 100],
+      data: [],
       tension: 0.4,
       fill: true,
     },
   ],
 });
 const ambientNoise = ref({
-  labels: ["08:00", "10:00", "12:00", "14:00", "16:00", "18:00"],
+  labels: [],
   datasets: [
     {
       backgroundColor: "rgba(206, 77, 255, 0.2)",
       borderColor: "rgba(206, 77, 255, 1)",
-      data: [30, 45, 50, 60, 55, 40],
+      data: [],
       tension: 0.4,
       fill: true,
     },
@@ -112,7 +100,6 @@ onMounted(() => {
   socket = new WebSocket("ws://localhost:8080");
 
   socket.onmessage = (event) => {
-    console.log(event.data);
     const messageJson = JSON.parse(event.data);
     if (messageJson.type === "temperature") {
       lastTemperature.value = messageJson.temperature;
