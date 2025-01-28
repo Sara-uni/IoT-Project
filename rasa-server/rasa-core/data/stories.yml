@@ -1,0 +1,23 @@
+version: "3.1"
+
+stories:
+
+- story: ask the temperature
+  steps:
+  - intent: temperature
+  - action: send_temperature
+
+- story: ask the light
+  steps:
+  - intent: light
+  - action: send_light
+
+- story: ask the noise
+  steps:
+  - intent: noise
+  - action: send_noise
+
+- story: out of scope fallback
+  steps:
+  - intent: out_of_scope
+  - action: send_repeat

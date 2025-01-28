@@ -37,7 +37,9 @@ Before getting started, ensure that you have the following installed:
    ```
 ---
 
-### Running the App
+### Running the Project
+
+#### Running the App
 
 To run the app on Android or iOS/macOS, use the following commands:
 
@@ -62,6 +64,23 @@ To run the app on Android or iOS/macOS, use the following commands:
    - Build the app using Vite
    - Sync with the iOS platform using Capacitor
    - Open Xcode for testing and deployment on a device or simulator
+
+#### Running Rasa server
+
+To install the necessary dependency and run the rasa server used to respond to the user vocal commands there are this prerequisite:
+- have python installed (ATTENTION: version 3.10.x is required, newer version have conflicts with some dependencies)
+- have pip installed and updated (use the command "pip install --upgrade pip")
+
+Installation procedure
+- move in the "rasa-server" folder and run the following command to create the virtual environment
+```bash
+python -m venv rasa-venv
+```
+- run the following commands to enter the virtual environment and install rasa with the necessary dependecies
+```bash
+source venv/bin/activate                                                                                           ✔  3s  
+pip install rasa
+```
 
 ---
 
