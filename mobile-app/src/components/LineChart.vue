@@ -1,8 +1,8 @@
 <template>
-  <Line :data="props.data" :options="options" />
+  <Line :data="chartData" :options="options" ref="chartRef" />
 </template>
 <script setup>
-import { computed } from "vue";
+import { computed, watch, ref } from "vue";
 import { Line } from "vue-chartjs";
 import {
   Chart as ChartJS,
@@ -13,6 +13,7 @@ import {
   Title,
   Tooltip,
   Legend,
+  Filler,
 } from "chart.js";
 
 ChartJS.register(
@@ -22,7 +23,8 @@ ChartJS.register(
   LineElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  Filler
 );
 
 const options = computed(() => {
@@ -61,13 +63,27 @@ const props = defineProps({
   scaleY: {
     type: String,
   },
-  minY: {
+  newData: {
     type: Number,
-    default: 0,
-  },
-  maxY: {
-    type: Number,
-    default: 100,
   },
 });
+
+const chartRef = ref(null);
+const chartData = props.data;
+
+watch(
+  () => props.newData,
+  () => {
+    if (chartRef.value && props.newData) {
+      chartData.labels.push(
+        new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      );
+      chartData.datasets[0].data.push(props.newData);
+      chartRef.value.chart.update();
+    }
+  }
+);
 </script>

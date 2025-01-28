@@ -11,7 +11,11 @@
           <ion-card-title>Temperature</ion-card-title>
         </ion-card-header>
         <ion-card-content>
-          <LineChart :data="temperature" scale-y="Temperature (°C)" />
+          <LineChart
+            :data="temperature"
+            scale-y="Temperature (°C)"
+            :new-data="lastTemperature"
+          />
         </ion-card-content>
       </ion-card>
       <ion-card>
@@ -44,7 +48,7 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted, onBeforeUnmount } from "vue";
 import {
   IonCard,
   IonCardContent,
@@ -59,18 +63,18 @@ import {
 } from "@ionic/vue";
 import LineChart from "./components/LineChart.vue";
 
-const temperature = ref({
-  labels: ["08:00", "10:00", "12:00", "14:00", "16:00", "18:00"],
+const temperature = {
+  labels: [],
   datasets: [
     {
       backgroundColor: "rgba(75, 192, 192, 0.2)",
       borderColor: "rgba(75, 192, 192, 1)",
-      data: ["20.0", "23.0", "22.0", "24.0", "21.0", "25.0", "26.0"],
+      data: [],
       tension: 0.4,
       fill: true,
     },
   ],
-});
+};
 const ambientLight = ref({
   labels: ["08:00", "10:00", "12:00", "14:00", "16:00", "18:00"],
   datasets: [
@@ -97,14 +101,30 @@ const ambientNoise = ref({
 });
 
 const ledStatus = ref(false);
-
-const refreshTemperature = () => {
-  temperature.value = (Math.random() * 10 + 20).toFixed(1);
-};
+const lastTemperature = ref(null);
 
 const toggleLed = () => {
   console.log(`LED Status: ${ledStatus.value ? "On" : "Off"}`);
 };
+
+let socket;
+onMounted(() => {
+  socket = new WebSocket("ws://localhost:8080");
+
+  socket.onmessage = (event) => {
+    console.log(event.data);
+    const messageJson = JSON.parse(event.data);
+    if (messageJson.type === "temperature") {
+      lastTemperature.value = messageJson.temperature;
+    }
+  };
+});
+
+onBeforeUnmount(() => {
+  if (socket) {
+    socket.close();
+  }
+});
 </script>
 
 <style scoped>
