@@ -4,12 +4,21 @@ intents:
   - temperature
   - light
   - noise
+  - turn_LED_on
+  - turn_LED_off
+  - change_LED_color
+
+entities:
+  - color
 
 actions:
   - send_temperature
   - send_light
   - send_noise
   - send_repeat
+  - turn_LED_on
+  - turn_LED_off
+  - change_LED_color
 
 # session_config:
 #   session_expiration_time: 60

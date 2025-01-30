@@ -67,3 +67,65 @@ class ActionSendRepeat(Action):
         dispatcher.utter_message(text="Non ho capito, puoi ripetere?")
 
         return []
+
+
+class ActionTurnOnLed(Action):
+    def name(self) -> Text:
+        return "turn_LED_on"
+
+    def run(self, dispatcher: CollectingDispatcher,
+            tracker: Tracker,
+            domain: Dict[Text, Any]) -> List:
+        dispatcher.utter_message(text="Sto accendendo il LED.")
+        return []
+
+
+class ActionTurnOffLed(Action):
+    def name(self) -> Text:
+        return "turn_LED_off"
+
+    def run(self, dispatcher: CollectingDispatcher,
+            tracker: Tracker,
+            domain: Dict[Text, Any]) -> List:
+        dispatcher.utter_message(text="Sto spegnendo il LED.")
+        return []
+
+
+class ActionChangeLedColor(Action):
+    def name(self) -> Text:
+        return "change_LED_color"
+
+    def run(self, dispatcher: CollectingDispatcher,
+            tracker: Tracker,
+            domain: Dict[Text, Any]) -> List:
+
+        # Cerca l'entità 'color' nel messaggio dell'utente
+        entities = tracker.latest_message.get("entities", [])
+        color = None
+
+        # Cerca l'entità 'color' nelle entità riconosciute
+        for entity in entities:
+            if entity.get("entity") == "color":
+                color = entity.get("value")
+                break
+
+        # Controlla se il colore esiste
+        if color and color in color_map:
+            led_color = color_map[color]  # Ottieni i valori RGB del colore
+            # Aggiungi qui la logica per cambiare effettivamente il colore del LED
+            dispatcher.utter_message(text=f"Sto cambiando il colore del LED a {color}.")
+        else:
+            dispatcher.utter_message(text="Non ho capito quale colore impostare o non è un colore valido. Puoi ripetere?")
+
+        return []
+
+
+color_map = {
+    "red":      [255, 0, 0],
+    "green":    [0, 255, 0],
+    "blue":     [0, 0, 255],
+    "yellow":   [255, 255, 0],
+    "purple":   [255, 0, 255],
+    "cyan":     [0, 255, 255],
+    "white":    [255, 255, 255],
+}

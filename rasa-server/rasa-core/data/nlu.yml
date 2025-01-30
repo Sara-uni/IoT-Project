@@ -90,3 +90,52 @@ nlu:
     - È troppo rumoroso in questo ambiente?
     - Quanto è forte il rumore in questa stanza?
     - Com’è il livello di rumore in questo momento?
+
+- intent: turn_LED_on
+  examples: |
+    - LED on
+    - Turn on the LED
+    - Activate the LED
+    - Turn the light on
+    - Can you turn on the LED?
+    - I want to turn on the LED
+    - Attiva il LED
+    - Accendi il LED
+    - Accendi la luce
+    - Puoi accendere il LED?
+    - Vorrei accendere il LED
+
+- intent: turn_LED_off
+  examples: |
+    - LED off
+    - Turn off the LED
+    - Deactivate the LED
+    - Turn the light off
+    - Can you turn off the LED?
+    - I want to turn off the LED
+    - Spegni il LED
+    - Spegni la luce
+    - Disattiva il LED
+    - Puoi spegnere il LED?
+    - Vorrei spegnere il LED
+
+- intent: change_LED_color
+  examples: |
+    - LED in [blue](color)
+    - Set the LED to [red](color)
+    - Make the LED [yellow](color)
+    - Set the light to [purple](color)
+    - I want the LED to be [red](color)
+    - Change the LED color to [blue](color)
+    - Change the LED light to [green](color)
+    - Switch the LED color to [white](color)
+    - Can you change the LED to [cyan](color)?
+    - LED di colore [blu](color)
+    - Imposta il LED su [rosso](color)
+    - Imposta la luce a [viola](color)
+    - Modifica il LED in [bianco](color)
+    - Metti il LED di colore [giallo](color)
+    - Vorrei che il LED fosse [rosso](color)
+    - Cambia il colore del LED a [blu](color)
+    - Cambia la luce del LED in [verde](color)
+    - Puoi cambiare il LED in [azzurro](color)?
