@@ -16,11 +16,13 @@
         title="Ambient Light"
         :data="ambientLight"
         scale-y="Light (lux)"
+        :new-data="lastLight"
       />
       <LineChart
         title="Ambient Noise"
         :data="ambientNoise"
         scale-y="Noise (dB)"
+        :new-data="lastNoise"
       />
       <ion-card>
         <ion-card-header>
@@ -63,7 +65,7 @@ const temperature = {
     },
   ],
 };
-const ambientLight = ref({
+const ambientLight = {
   labels: [],
   datasets: [
     {
@@ -74,8 +76,8 @@ const ambientLight = ref({
       fill: true,
     },
   ],
-});
-const ambientNoise = ref({
+};
+const ambientNoise = {
   labels: [],
   datasets: [
     {
@@ -86,32 +88,70 @@ const ambientNoise = ref({
       fill: true,
     },
   ],
-});
+};
 
 const ledStatus = ref(false);
 const lastTemperature = ref(null);
+const lastLight = ref(null);
+const lastNoise = ref(null);
 
 const toggleLed = () => {
   console.log(`LED Status: ${ledStatus.value ? "On" : "Off"}`);
 };
 
-let socket;
+// let socket;
+// const ip_address = "192.168.1.110";
+// onMounted(() => {
+//   socket = new WebSocket("wss://" + ip_address + ":8080");
+
+//   socket.onmessage = (event) => {
+//     const messageJson = JSON.parse(event.data);
+//     if (messageJson.type === "temperature") {
+//       lastTemperature.value = messageJson.value;
+//     } else if (messageJson.type === "light") {
+//       lastLight.value = messageJson.value;
+//     } else if (messageJson.type === "noise") {
+//       lastNoise.value = messageJson.value;
+//     }
+//   };
+// });
+
+// onBeforeUnmount(() => {
+//   if (socket) {
+//     socket.close();
+//   }
+// });
+
 onMounted(() => {
-  socket = new WebSocket("ws://localhost:8080");
-
-  socket.onmessage = (event) => {
-    const messageJson = JSON.parse(event.data);
-    if (messageJson.type === "temperature") {
-      lastTemperature.value = messageJson.temperature;
-    }
-  };
+  setInterval(simulateMessages, 1000);
 });
 
-onBeforeUnmount(() => {
-  if (socket) {
-    socket.close();
+const getRandomTemperature = () => {
+  return parseFloat((Math.random() * (30 - 15) + 15).toFixed(2));
+};
+
+const getRandomLightLevel = () => {
+  return parseFloat((Math.random() * (1000 - 100) + 100).toFixed(2));
+};
+
+const getRandomNoiseLevel = () => {
+  return parseFloat((Math.random() * (80 - 30) + 30).toFixed(2));
+};
+
+const simulateMessages = () => {
+  let rand = Math.floor(Math.random() * 3) + 1;
+  switch (rand) {
+    case 1:
+      lastTemperature.value = getRandomTemperature();
+      break;
+    case 2:
+      lastLight.value = getRandomLightLevel();
+      break;
+    case 3:
+      lastNoise.value = getRandomNoiseLevel();
+      break;
   }
-});
+};
 </script>
 
 <style scoped>
