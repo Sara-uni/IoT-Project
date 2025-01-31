@@ -18,6 +18,7 @@ const getData = async (data) => {
     return response.data;
   } catch (error) {
     console.error("Errore nella richiesta:", error);
+    return { status: "error", message: "Errore nella richiesta" };
   }
 };
 
@@ -29,6 +30,7 @@ const toggleLed = async (mode) => {
     return response.data;
   } catch (error) {
     console.error("Errore nella richiesta:", error);
+    return { status: "error", message: "Errore nella richiesta" };
   }
 };
 
@@ -40,6 +42,7 @@ const setLedColor = async (r, g, b) => {
     return response.data;
   } catch (error) {
     console.error("Errore nella richiesta:", error);
+    return { status: "error", message: "Errore nella richiesta" };
   }
 };
 

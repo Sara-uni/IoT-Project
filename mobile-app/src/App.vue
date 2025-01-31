@@ -146,12 +146,16 @@ const requestData = async () => {
 };
 
 const toggleLed = () => {
-  ApiService.toggleLed(ledStatus.value ? "on" : "off").then((data) => {
-    if (!data || data.status !== "success") {
-      ledStatus.value = !ledStatus.value;
-      if (data) console.error("Error:", data.message);
-    }
-  });
+  ApiService.toggleLed(ledStatus.value ? "on" : "off")
+    .then((data) => {
+      if (!data || data.status !== "success") {
+        ledStatus.value = !ledStatus.value;
+        if (data) console.error("Error:", data.message);
+      }
+    })
+    .catch((error) => {
+      console.error("Error:", error);
+    });
 };
 
 const setColor = (r, g, b) => {
