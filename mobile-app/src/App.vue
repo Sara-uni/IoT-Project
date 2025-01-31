@@ -52,6 +52,7 @@ import {
   IonToggle,
 } from "@ionic/vue";
 import LineChart from "./components/LineChart.vue";
+import ApiService from "./api/request.js";
 
 const temperature = {
   labels: [],
@@ -96,62 +97,27 @@ const lastLight = ref(null);
 const lastNoise = ref(null);
 
 const toggleLed = () => {
-  console.log(`LED Status: ${ledStatus.value ? "On" : "Off"}`);
+  console.log(ledStatus.value);
+  ApiService.toggleLed(ledStatus.value ? "on" : "off");
 };
 
-// let socket;
-// const ip_address = "192.168.1.110";
-// onMounted(() => {
-//   socket = new WebSocket("wss://" + ip_address + ":8080");
+const requestData = () => {
+  ApiService.getData("temperature").then((data) => {
+    lastTemperature.value = data.value;
+  });
+  ApiService.getData("light").then((data) => {
+    lastLight.value = data.value;
+  });
+  ApiService.getData("noise").then((data) => {
+    lastNoise.value = data.value;
+  });
+};
 
-//   socket.onmessage = (event) => {
-//     const messageJson = JSON.parse(event.data);
-//     if (messageJson.type === "temperature") {
-//       lastTemperature.value = messageJson.value;
-//     } else if (messageJson.type === "light") {
-//       lastLight.value = messageJson.value;
-//     } else if (messageJson.type === "noise") {
-//       lastNoise.value = messageJson.value;
-//     }
-//   };
-// });
-
-// onBeforeUnmount(() => {
-//   if (socket) {
-//     socket.close();
-//   }
-// });
+requestData();
 
 onMounted(() => {
-  setInterval(simulateMessages, 1000);
+  setInterval(requestData, 5000);
 });
-
-const getRandomTemperature = () => {
-  return parseFloat((Math.random() * (30 - 15) + 15).toFixed(2));
-};
-
-const getRandomLightLevel = () => {
-  return parseFloat((Math.random() * (1000 - 100) + 100).toFixed(2));
-};
-
-const getRandomNoiseLevel = () => {
-  return parseFloat((Math.random() * (80 - 30) + 30).toFixed(2));
-};
-
-const simulateMessages = () => {
-  let rand = Math.floor(Math.random() * 3) + 1;
-  switch (rand) {
-    case 1:
-      lastTemperature.value = getRandomTemperature();
-      break;
-    case 2:
-      lastLight.value = getRandomLightLevel();
-      break;
-    case 3:
-      lastNoise.value = getRandomNoiseLevel();
-      break;
-  }
-};
 </script>
 
 <style scoped>
