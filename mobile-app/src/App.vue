@@ -29,8 +29,32 @@
           <ion-card-title>LED Control</ion-card-title>
         </ion-card-header>
         <ion-card-content>
-          <ion-toggle v-model="ledStatus" @ionChange="toggleLed"></ion-toggle>
-          <p>LED {{ ledStatus ? "Acceso" : "Spento" }}</p>
+          <ion-grid>
+            <ion-row>
+              <ion-col class="vertical-flex">
+                <ion-toggle
+                  v-model="ledStatus"
+                  @ionChange="toggleLed"
+                ></ion-toggle>
+                <p>LED {{ ledStatus ? "On" : "Off" }}</p>
+              </ion-col>
+              <ion-col>
+                <div v-if="ledStatus" class="horizontal-flex">
+                  <input type="color" v-model="color" />
+                  <ion-button @click="setColor" fill="none">
+                    SET COLOR
+                  </ion-button>
+                  <ion-alert
+                    :is-open="showSetColorError"
+                    header="Error Setting Color"
+                    message="Some went wrong setting color, try again!"
+                    :buttons="['Close']"
+                    @didDismiss="() => (showSetColorError = false)"
+                  ></ion-alert>
+                </div>
+              </ion-col>
+            </ion-row>
+          </ion-grid>
         </ion-card-content>
       </ion-card>
     </ion-content>
@@ -50,6 +74,10 @@ import {
   IonTitle,
   IonToolbar,
   IonToggle,
+  IonGrid,
+  IonRow,
+  IonCol,
+  IonButton,
 } from "@ionic/vue";
 import LineChart from "./components/LineChart.vue";
 import ApiService from "./api/request.js";
@@ -91,19 +119,12 @@ const ambientNoise = {
   ],
 };
 
-const ledStatus = ref(false);
 const lastTemperature = ref(null);
 const lastLight = ref(null);
 const lastNoise = ref(null);
-
-const toggleLed = () => {
-  ApiService.toggleLed(ledStatus.value ? "on" : "off").then((data) => {
-    if (!data.status || data.status !== "success") {
-      ledStatus.value = !ledStatus.value;
-      console.error("Error:", data.message);
-    }
-  });
-};
+const ledStatus = ref(false);
+const color = ref("#ff0000");
+const showSetColorError = ref(false);
 
 const requestData = async () => {
   let data = await ApiService.getData("temperature");
@@ -128,6 +149,24 @@ const requestData = async () => {
   }
 };
 
+const toggleLed = () => {
+  ApiService.toggleLed(ledStatus.value ? "on" : "off").then((data) => {
+    if (!data.status || data.status !== "success") {
+      ledStatus.value = !ledStatus.value;
+      console.error("Error:", data.message);
+    }
+  });
+};
+
+const setColor = () => {
+  ApiService.setLedColor(color.value).then((data) => {
+    if (!data.status || data.status !== "success") {
+      console.error("Error:", data.message);
+      showSetColorError.value = true;
+    }
+  });
+};
+
 requestData();
 
 onMounted(() => {
@@ -138,5 +177,19 @@ onMounted(() => {
 <style scoped>
 ion-card {
   margin: 20px;
+}
+
+.vertical-flex {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-direction: column;
+  min-height: 4rem;
+}
+
+.horizontal-flex {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 </style>
