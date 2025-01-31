@@ -26,7 +26,7 @@
       />
       <ion-card>
         <ion-card-header>
-          <ion-card-title>Controllo LED</ion-card-title>
+          <ion-card-title>LED Control</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-toggle v-model="ledStatus" @ionChange="toggleLed"></ion-toggle>
@@ -38,7 +38,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from "vue";
+import { ref, onMounted } from "vue";
 import {
   IonCard,
   IonCardContent,
@@ -97,26 +97,41 @@ const lastLight = ref(null);
 const lastNoise = ref(null);
 
 const toggleLed = () => {
-  console.log(ledStatus.value);
-  ApiService.toggleLed(ledStatus.value ? "on" : "off");
+  ApiService.toggleLed(ledStatus.value ? "on" : "off").then((data) => {
+    if (!data.status || data.status !== "success") {
+      ledStatus.value = !ledStatus.value;
+      console.error("Error:", data.message);
+    }
+  });
 };
 
-const requestData = () => {
-  ApiService.getData("temperature").then((data) => {
+const requestData = async () => {
+  let data = await ApiService.getData("temperature");
+  if (data.status === "success") {
     lastTemperature.value = data.value;
-  });
-  ApiService.getData("light").then((data) => {
+  } else {
+    console.error("Error:", data.message);
+  }
+
+  data = await ApiService.getData("light");
+  if (data.status === "success") {
     lastLight.value = data.value;
-  });
-  ApiService.getData("noise").then((data) => {
+  } else {
+    console.error("Error:", data.message);
+  }
+
+  data = await ApiService.getData("noise");
+  if (data.status === "success") {
     lastNoise.value = data.value;
-  });
+  } else {
+    console.error("Error:", data.message);
+  }
 };
 
 requestData();
 
 onMounted(() => {
-  setInterval(requestData, 5000);
+  // setInterval(requestData, 5000);
 });
 </script>
 

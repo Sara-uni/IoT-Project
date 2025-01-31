@@ -13,7 +13,7 @@ const header = {
 const getData = async (data) => {
   try {
     const options = header;
-    options.url = `${API_BASE_URL}/${data}`;
+    options.url = `${API_BASE_URL}/data/${data}`;
     const response = await CapacitorHttp.get(options);
     return response.data;
   } catch (error) {
@@ -23,8 +23,10 @@ const getData = async (data) => {
 
 const toggleLed = async (mode) => {
   try {
-    // const response = await api.get(`/led?mode=${mode}`);
-    // return response.data;
+    const options = header;
+    options.url = `${API_BASE_URL}/led/${mode}`;
+    const response = await CapacitorHttp.get(options);
+    return response.data;
   } catch (error) {
     console.error("Errore nella richiesta:", error);
   }
@@ -32,8 +34,10 @@ const toggleLed = async (mode) => {
 
 const setLedColor = async (color) => {
   try {
-    //const response = await api.get(`/led?color=${color}`);
-    //return response.data;
+    const options = header;
+    options.url = `${API_BASE_URL}/led-color/${color}`;
+    const response = await CapacitorHttp.get(options);
+    return response.data;
   } catch (error) {
     console.error("Errore nella richiesta:", error);
   }
