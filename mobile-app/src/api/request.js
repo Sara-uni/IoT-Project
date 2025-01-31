@@ -32,10 +32,10 @@ const toggleLed = async (mode) => {
   }
 };
 
-const setLedColor = async (color) => {
+const setLedColor = async (r, g, b) => {
   try {
     const options = header;
-    options.url = `${API_BASE_URL}/led-color/${color.replace("#", "")}`;
+    options.url = `${API_BASE_URL}/led-color?r=${r}&g=${g}&b=${b}`;
     const response = await CapacitorHttp.get(options);
     return response.data;
   } catch (error) {

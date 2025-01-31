@@ -24,37 +24,33 @@
         scale-y="Noise (dB)"
         :new-data="lastNoise"
       />
-      <ion-card>
+      <ion-card style="margin-bottom: 10rem">
         <ion-card-header>
-          <ion-card-title>LED Control</ion-card-title>
+          <ion-card-title>
+            <ion-grid>
+              <ion-row>
+                <ion-col>LED Control</ion-col>
+                <ion-col class="flex-right">
+                  <ion-toggle
+                    v-model="ledStatus"
+                    @ionChange="toggleLed"
+                  ></ion-toggle>
+                </ion-col>
+              </ion-row>
+            </ion-grid>
+          </ion-card-title>
         </ion-card-header>
-        <ion-card-content>
-          <ion-grid>
-            <ion-row>
-              <ion-col class="vertical-flex">
-                <ion-toggle
-                  v-model="ledStatus"
-                  @ionChange="toggleLed"
-                ></ion-toggle>
-                <p>LED {{ ledStatus ? "On" : "Off" }}</p>
-              </ion-col>
-              <ion-col>
-                <div v-if="ledStatus" class="horizontal-flex">
-                  <input type="color" v-model="color" />
-                  <ion-button @click="setColor" fill="none">
-                    SET COLOR
-                  </ion-button>
-                  <ion-alert
-                    :is-open="showSetColorError"
-                    header="Error Setting Color"
-                    message="Some went wrong setting color, try again!"
-                    :buttons="['Close']"
-                    @didDismiss="() => (showSetColorError = false)"
-                  ></ion-alert>
-                </div>
-              </ion-col>
-            </ion-row>
-          </ion-grid>
+        <ion-card-content v-if="ledStatus" style="padding-left: 2rem">
+          <div v-if="ledStatus">
+            <ion-alert
+              :is-open="showSetColorError"
+              header="Error Setting Color"
+              message="Some went wrong setting color, try again!"
+              :buttons="['Close']"
+              @didDismiss="() => (showSetColorError = false)"
+            ></ion-alert>
+          </div>
+          <ColorPicker @changeColor="(r, g, b) => setColor(r, g, b)" />
         </ion-card-content>
       </ion-card>
     </ion-content>
@@ -77,10 +73,11 @@ import {
   IonGrid,
   IonRow,
   IonCol,
-  IonButton,
+  IonAlert,
 } from "@ionic/vue";
 import LineChart from "./components/LineChart.vue";
 import ApiService from "./api/request.js";
+import ColorPicker from "./components/ColorPicker.vue";
 
 const temperature = {
   labels: [],
@@ -122,27 +119,26 @@ const ambientNoise = {
 const lastTemperature = ref(null);
 const lastLight = ref(null);
 const lastNoise = ref(null);
-const ledStatus = ref(false);
-const color = ref("#ff0000");
+const ledStatus = ref(true);
 const showSetColorError = ref(false);
 
 const requestData = async () => {
   let data = await ApiService.getData("temperature");
-  if (data.status === "success") {
+  if (data && data.status === "success") {
     lastTemperature.value = data.value;
   } else {
     console.error("Error:", data.message);
   }
 
   data = await ApiService.getData("light");
-  if (data.status === "success") {
+  if (data && data.status === "success") {
     lastLight.value = data.value;
   } else {
     console.error("Error:", data.message);
   }
 
   data = await ApiService.getData("noise");
-  if (data.status === "success") {
+  if (data && data.status === "success") {
     lastNoise.value = data.value;
   } else {
     console.error("Error:", data.message);
@@ -151,18 +147,18 @@ const requestData = async () => {
 
 const toggleLed = () => {
   ApiService.toggleLed(ledStatus.value ? "on" : "off").then((data) => {
-    if (!data.status || data.status !== "success") {
+    if (!data || data.status !== "success") {
       ledStatus.value = !ledStatus.value;
-      console.error("Error:", data.message);
+      if (data) console.error("Error:", data.message);
     }
   });
 };
 
-const setColor = () => {
-  ApiService.setLedColor(color.value).then((data) => {
-    if (!data.status || data.status !== "success") {
-      console.error("Error:", data.message);
+const setColor = (r, g, b) => {
+  ApiService.setLedColor(r, g, b).then((data) => {
+    if (!data || data.status !== "success") {
       showSetColorError.value = true;
+      if (data) console.error("Error:", data.message);
     }
   });
 };
@@ -178,18 +174,9 @@ onMounted(() => {
 ion-card {
   margin: 20px;
 }
-
-.vertical-flex {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  flex-direction: column;
-  min-height: 4rem;
-}
-
-.horizontal-flex {
+.flex-right {
+  justify-content: end;
   display: flex;
   align-items: center;
-  justify-content: center;
 }
 </style>
