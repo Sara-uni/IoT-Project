@@ -46,6 +46,18 @@ const setLedColor = async (r, g, b) => {
   }
 };
 
-const ApiService = { getData, toggleLed, setLedColor };
+const getLedStatus = async () => {
+  try {
+    const options = header;
+    options.url = `${API_BASE_URL}/led-status`;
+    const response = await CapacitorHttp.get(options);
+    return response.data;
+  } catch (error) {
+    console.error("Errore nella richiesta:", error);
+    return { status: "error", message: "Errore nella richiesta" };
+  }
+};
+
+const ApiService = { getData, toggleLed, setLedColor, getLedStatus };
 
 export default ApiService;

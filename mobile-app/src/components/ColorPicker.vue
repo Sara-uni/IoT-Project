@@ -7,6 +7,7 @@
           :pin="true"
           :min="0"
           :max="255"
+          :value="red"
           class="red"
           @ionChange="redChanged"
         ></ion-range>
@@ -15,6 +16,7 @@
           :pin="true"
           :min="0"
           :max="255"
+          :value="green"
           class="green"
           @ionChange="greenChanged"
         ></ion-range>
@@ -23,6 +25,7 @@
           :pin="true"
           :min="0"
           :max="255"
+          :value="blue"
           class="blue"
           @ionChange="blueChanged"
         ></ion-range>
@@ -39,7 +42,9 @@
 
 <script setup>
 import { IonRange, IonGrid, IonRow, IonCol, IonButton } from "@ionic/vue";
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
+import ApiService from "../api/request.js";
+
 const red = ref(0);
 const green = ref(0);
 const blue = ref(0);
@@ -62,6 +67,19 @@ const blueChanged = (event) => {
 const emitColor = () => {
   emits("changeColor", red.value, green.value, blue.value);
 };
+
+onMounted(() => {
+  ApiService.getLedStatus().then((data) => {
+    if (!data || data.status !== "success") {
+      return;
+    }
+    if (data.active) {
+      red.value = data.r;
+      green.value = data.g;
+      blue.value = data.b;
+    }
+  });
+});
 </script>
 <style scoped>
 .red {

@@ -10,18 +10,21 @@
         title="Temperature"
         :data="temperature"
         scale-y="Temperature (°C)"
+        unit="°C"
         :new-data="lastTemperature"
       />
       <LineChart
         title="Ambient Light"
         :data="ambientLight"
         scale-y="Light (lux)"
+        unit="lux"
         :new-data="lastLight"
       />
       <LineChart
         title="Ambient Noise"
         :data="ambientNoise"
         scale-y="Noise (dB)"
+        unit="dB"
         :new-data="lastNoise"
       />
       <ion-card style="margin-bottom: 10rem">
@@ -119,7 +122,7 @@ const ambientNoise = {
 const lastTemperature = ref(null);
 const lastLight = ref(null);
 const lastNoise = ref(null);
-const ledStatus = ref(true);
+const ledStatus = ref(false);
 const showSetColorError = ref(false);
 
 const requestData = async () => {
@@ -171,6 +174,13 @@ requestData();
 
 onMounted(() => {
   setInterval(requestData, 5000);
+  ApiService.getLedStatus().then((data) => {
+    if (!data || data.status != "success") {
+      return;
+    }
+
+    ledStatus.value = data.active;
+  });
 });
 </script>
 

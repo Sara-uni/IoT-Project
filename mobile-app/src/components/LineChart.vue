@@ -82,6 +82,9 @@ const props = defineProps({
   scaleY: {
     type: String,
   },
+  unit: {
+    type: String,
+  },
   newData: {
     type: Number,
   },
@@ -106,7 +109,7 @@ const options = computed(() => ({
         text: "Time",
       },
       ticks: {
-        maxTicksLimit: maxDataPoints,
+        maxTicksLimit: maxDataPoints / 3,
       },
       min: 0,
       max: maxDataPoints,
@@ -118,7 +121,6 @@ const options = computed(() => ({
       },
     },
   },
-  // Configurazione del plugin zoom
   interaction: {
     mode: "nearest",
     intersect: false,
@@ -126,6 +128,14 @@ const options = computed(() => ({
   plugins: {
     legend: { display: false },
     title: { display: false },
+    tooltip: {
+      callbacks: {
+        label: function (context) {
+          let value = context.raw;
+          return `${value} ${props.unit}`; // Mostra l'unità di misura nei tooltip
+        },
+      },
+    },
     zoom: {
       pan: {
         enabled: true,
