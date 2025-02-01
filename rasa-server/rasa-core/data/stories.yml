@@ -1,0 +1,40 @@
+version: "3.1"
+
+stories:
+
+- story: ask the temperature
+  steps:
+  - intent: temperature
+  - action: send_temperature
+
+- story: ask the light
+  steps:
+  - intent: light
+  - action: send_light
+
+- story: ask the noise
+  steps:
+  - intent: noise
+  - action: send_noise
+
+- story: turn on the LED
+  steps:
+  - intent: turn_LED_on
+  - action: turn_LED_on
+
+- story: turn off the LED
+  steps:
+  - intent: turn_LED_off
+  - action: turn_LED_off
+
+- story: change LED color
+  steps:
+  - intent: change_LED_color
+    entities:
+    - color: "blue"
+  - action: change_LED_color
+
+- story: out of scope fallback
+  steps:
+  - intent: out_of_scope
+  - action: send_repeat
