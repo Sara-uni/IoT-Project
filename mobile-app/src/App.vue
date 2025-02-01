@@ -6,9 +6,6 @@
       </ion-toolbar>
     </ion-header>
     <ion-content>
-      <ion-button @click="startRec">
-        START
-      </ion-button>
       <LineChart
         title="Temperature"
         :data="temperature"
@@ -59,6 +56,22 @@
           <ColorPicker @changeColor="(r, g, b) => setColor(r, g, b)" />
         </ion-card-content>
       </ion-card>
+      <ion-fab
+        slot="fixed"
+        vertical="bottom"
+        horizontal="end"
+        @click="toggleRec"
+      >
+        <ion-fab-button :color="isListen ? 'danger' : 'dark'">
+          <ion-icon v-if="!isListen" :icon="mic"></ion-icon>
+          <ion-icon v-else :icon="micOff"></ion-icon>
+        </ion-fab-button>
+        <ion-toast
+          :is-open="showCommand"
+          :message="command"
+          :duration="5000"
+        ></ion-toast>
+      </ion-fab>
     </ion-content>
   </ion-page>
 </template>
@@ -80,11 +93,16 @@ import {
   IonRow,
   IonCol,
   IonAlert,
+  IonFab,
+  IonFabButton,
+  IonIcon,
+  IonToast,
 } from "@ionic/vue";
 import LineChart from "./components/LineChart.vue";
 import ApiService from "./api/request.js";
 import ColorPicker from "./components/ColorPicker.vue";
-import {Vosk} from "./api/vosk.js"
+import { Vosk } from "./api/vosk.js";
+import { mic, micOff } from "ionicons/icons";
 
 const temperature = {
   labels: [],
@@ -128,6 +146,9 @@ const lastLight = ref(null);
 const lastNoise = ref(null);
 const ledStatus = ref(false);
 const showSetColorError = ref(false);
+const isListen = ref(false);
+const showCommand = ref(false);
+const command = ref("");
 
 const requestData = async () => {
   let data = await ApiService.getData("temperature");
@@ -176,48 +197,46 @@ const setColor = (r, g, b) => {
 
 requestData();
 
+const toggleRec = () => {
+  if (isListen.value) {
+    stopRec();
+  } else {
+    startRec();
+  }
+};
+
 const startRec = () => {
+  isListen.value = true;
   Vosk.startRecognition();
-}
+};
+const stopRec = () => {
+  isListen.value = false;
+  Vosk.stopRecognition();
+};
 
 onMounted(() => {
-  VoskPlugin.addListener('transcriptionUpdate', (data) => {
+  VoskPlugin.addListener("transcriptionUpdate", (data) => {
     if (data.transcription) {
       const parsedObject = JSON.parse(data.transcription);
       if (parsedObject) {
-        transcription.value = parsedObject.text;
-        if (transcription.value.toLowerCase().includes(keyword)) {
-          const index = transcription.value.indexOf(keyword);
-          command.value = transcription.value.substring(index + keyword.length).trim();
-          log.value = {
-            message: "Comando: " + command.value,
-            type: "info"
-          }
-          const response = Vosk.commandClassification(command.value);
-          console.log(response);
-          if (response.status = 'success') {
-            QuasarAlert.showNotification(response.message);
-          } else {
-            QuasarAlert.showNotification(response.message, "negative");
-          }
-        }
+        command.value = parsedObject.text;
       }
     }
   });
 
-  VoskPlugin.addListener('permissionGranted', () => {
+  VoskPlugin.addListener("permissionGranted", () => {
     log.value = {
       message: "Premesso concesso",
-      type: "info"
-    }
+      type: "info",
+    };
     Vosk.startRecognition();
   });
 
-  VoskPlugin.addListener('permissionDenied', () => {
+  VoskPlugin.addListener("permissionDenied", () => {
     log.value = {
       message: "Premesso negato",
-      type: "error"
-    }
+      type: "error",
+    };
   });
 
   setInterval(requestData, 5000);
