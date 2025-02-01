@@ -170,7 +170,7 @@ const setColor = (r, g, b) => {
 requestData();
 
 onMounted(() => {
-  // setInterval(requestData, 5000);
+  setInterval(requestData, 5000);
 });
 </script>
 

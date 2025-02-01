@@ -99,10 +99,6 @@ const setRealtime = () => {
 
 const options = computed(() => ({
   responsive: true,
-  plugins: {
-    legend: { display: false },
-    title: { display: false },
-  },
   scales: {
     x: {
       title: {
@@ -128,6 +124,8 @@ const options = computed(() => ({
     intersect: false,
   },
   plugins: {
+    legend: { display: false },
+    title: { display: false },
     zoom: {
       pan: {
         enabled: true,
