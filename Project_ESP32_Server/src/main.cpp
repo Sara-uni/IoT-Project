@@ -53,7 +53,23 @@ void setup() {
 
   // Endpoint per la pagina principale
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(200, "text/html", "<h1>ESP32 Web Server</h1><p>Endpoint dati: <b>/data</b></p>");
+    String html = "<html><body>";
+    html += "<h1>ESP32 Web Server</h1>";
+    html += "<p>Endpoint dati: <b>/data</b></p>";
+    html += "<div id='data'></div>";
+    html += "<script>";
+    html += "function fetchData() {";
+    html += "  fetch('/data')";  // Richiesta al server
+    html += "    .then(response => response.json())";
+    html += "    .then(data => {";
+    html += "      document.getElementById('data').innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';";
+    html += "    });";
+    html += "}";
+    html += "setInterval(fetchData, 1000);";  // Aggiorna ogni 1 secondo
+    html += "fetchData();";  // Inizializza il primo fetch
+    html += "</script>";
+    html += "</body></html>";
+    request->send(200, "text/html", html);
   });
 
   // Endpoint per ottenere i dati più recenti
