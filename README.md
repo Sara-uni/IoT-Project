@@ -9,6 +9,7 @@ Future enhancements include adding a user interface on the MSP432, integrating v
 ## Getting Started
 
 These instructions will help you set up the project on your local machine for development and testing.
+You can find last the APK in \mobile-app\android\app\build\outputs\apk\debug.
 
 ### Prerequisites
 
