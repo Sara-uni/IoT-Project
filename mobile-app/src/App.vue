@@ -6,6 +6,9 @@
       </ion-toolbar>
     </ion-header>
     <ion-content>
+      <ion-button @click="startRec">
+        START
+      </ion-button>
       <LineChart
         title="Temperature"
         :data="temperature"
@@ -81,6 +84,7 @@ import {
 import LineChart from "./components/LineChart.vue";
 import ApiService from "./api/request.js";
 import ColorPicker from "./components/ColorPicker.vue";
+import {Vosk} from "./api/vosk.js"
 
 const temperature = {
   labels: [],
@@ -172,7 +176,50 @@ const setColor = (r, g, b) => {
 
 requestData();
 
+const startRec = () => {
+  Vosk.startRecognition();
+}
+
 onMounted(() => {
+  VoskPlugin.addListener('transcriptionUpdate', (data) => {
+    if (data.transcription) {
+      const parsedObject = JSON.parse(data.transcription);
+      if (parsedObject) {
+        transcription.value = parsedObject.text;
+        if (transcription.value.toLowerCase().includes(keyword)) {
+          const index = transcription.value.indexOf(keyword);
+          command.value = transcription.value.substring(index + keyword.length).trim();
+          log.value = {
+            message: "Comando: " + command.value,
+            type: "info"
+          }
+          const response = Vosk.commandClassification(command.value);
+          console.log(response);
+          if (response.status = 'success') {
+            QuasarAlert.showNotification(response.message);
+          } else {
+            QuasarAlert.showNotification(response.message, "negative");
+          }
+        }
+      }
+    }
+  });
+
+  VoskPlugin.addListener('permissionGranted', () => {
+    log.value = {
+      message: "Premesso concesso",
+      type: "info"
+    }
+    Vosk.startRecognition();
+  });
+
+  VoskPlugin.addListener('permissionDenied', () => {
+    log.value = {
+      message: "Premesso negato",
+      type: "error"
+    }
+  });
+
   setInterval(requestData, 5000);
   ApiService.getLedStatus().then((data) => {
     if (!data || data.status != "success") {
