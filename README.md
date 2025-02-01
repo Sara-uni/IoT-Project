@@ -65,7 +65,7 @@ To run the app on Android or iOS/macOS, use the following commands:
    - Sync with the iOS platform using Capacitor
    - Open Xcode for testing and deployment on a device or simulator
 
-#### Running Rasa server
+#### Installing and Running Rasa server
 
 To install the necessary dependency and run the rasa server used to respond to the user vocal commands there are some prerequisite:
 - have python installed (ATTENTION: **version 3.10.x is required**, newer version have conflicts with some dependencies)
@@ -82,6 +82,10 @@ python -m venv rasa-venv
 source rasa-venv/bin/activate
 pip install rasa
 ```
+
+Now, for running the server, you have to (*optional*: train your model with ```rasa train``` and) run the following commands in two separate terminals:
+- ```rasa run``` for run the model
+- ```rasa run actions``` for the responses to the user commands
 
 ---
 
