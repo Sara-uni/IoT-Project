@@ -1,6 +1,6 @@
 import { CapacitorHttp } from "@capacitor/core";
 
-const API_BASE_URL = "http://10.254.254.129:3000"; //IP ESP
+const API_BASE_URL = "http://192.168.190.67:3000"; //IP ESP
 
 const header = {
   url: API_BASE_URL,
@@ -58,6 +58,24 @@ const getLedStatus = async () => {
   }
 };
 
-const ApiService = { getData, toggleLed, setLedColor, getLedStatus };
+const sendCommand = async (command) => {
+  try {
+    const options = header;
+    options.url = `${API_BASE_URL}/command`;
+    options.data = { command };
+    const response = await CapacitorHttp.post(options);
+    return response.data;
+  } catch (error) {
+    console.error("Errore nella richiesta:", error);
+    return { status: "error", message: "Errore nella richiesta" };
+  }
+};
+const ApiService = {
+  getData,
+  toggleLed,
+  setLedColor,
+  getLedStatus,
+  sendCommand,
+};
 
 export default ApiService;

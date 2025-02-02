@@ -62,14 +62,18 @@
         horizontal="end"
         @click="toggleRec"
       >
-        <ion-fab-button :color="isListen ? 'danger' : 'dark'">
-          <ion-icon v-if="!isListen" :icon="mic"></ion-icon>
+        <ion-fab-button :color="isListening ? 'danger' : 'dark'">
+          <ion-icon v-if="!isListening" :icon="mic"></ion-icon>
           <ion-icon v-else :icon="micOff"></ion-icon>
         </ion-fab-button>
         <ion-toast
           :is-open="showCommand"
           :message="command"
           :duration="5000"
+          position="top"
+          animated="true"
+          color="dark"
+          @didDismiss="() => (showCommand = false)"
         ></ion-toast>
       </ion-fab>
     </ion-content>
@@ -77,7 +81,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 import {
   IonCard,
   IonCardContent,
@@ -103,6 +107,9 @@ import ApiService from "./api/request.js";
 import ColorPicker from "./components/ColorPicker.vue";
 import { Vosk } from "./api/vosk.js";
 import { mic, micOff } from "ionicons/icons";
+import { registerPlugin } from "@capacitor/core";
+
+const VoskPlugin = registerPlugin("VoskPlugin");
 
 const temperature = {
   labels: [],
@@ -146,7 +153,7 @@ const lastLight = ref(null);
 const lastNoise = ref(null);
 const ledStatus = ref(false);
 const showSetColorError = ref(false);
-const isListen = ref(false);
+const isListening = ref(false);
 const showCommand = ref(false);
 const command = ref("");
 
@@ -198,7 +205,7 @@ const setColor = (r, g, b) => {
 requestData();
 
 const toggleRec = () => {
-  if (isListen.value) {
+  if (isListening.value) {
     stopRec();
   } else {
     startRec();
@@ -206,11 +213,11 @@ const toggleRec = () => {
 };
 
 const startRec = () => {
-  isListen.value = true;
+  isListening.value = true;
   Vosk.startRecognition();
 };
 const stopRec = () => {
-  isListen.value = false;
+  isListening.value = false;
   Vosk.stopRecognition();
 };
 
@@ -218,10 +225,14 @@ onMounted(() => {
   VoskPlugin.addListener("transcriptionUpdate", (data) => {
     if (data.transcription) {
       const parsedObject = JSON.parse(data.transcription);
+      console.log(parsedObject);
       if (parsedObject) {
-        command.value = parsedObject.text;
+        command.value = "Comando inviato: " + parsedObject.text;
+        showCommand.value = true;
+        ApiService.sendCommand(parsedObject.text);
       }
     }
+    isListening.value = false;
   });
 
   VoskPlugin.addListener("permissionGranted", () => {
@@ -247,6 +258,10 @@ onMounted(() => {
 
     ledStatus.value = data.active;
   });
+});
+
+onUnmounted(() => {
+  VoskPlugin.removeAllListeners();
 });
 </script>
 
