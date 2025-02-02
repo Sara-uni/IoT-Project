@@ -56,12 +56,32 @@
           <ColorPicker @changeColor="(r, g, b) => setColor(r, g, b)" />
         </ion-card-content>
       </ion-card>
+      <ion-fab
+        slot="fixed"
+        vertical="bottom"
+        horizontal="end"
+        @click="toggleRec"
+      >
+        <ion-fab-button :color="isListening ? 'danger' : 'dark'">
+          <ion-icon v-if="!isListening" :icon="mic"></ion-icon>
+          <ion-icon v-else :icon="micOff"></ion-icon>
+        </ion-fab-button>
+        <ion-toast
+          :is-open="showCommand"
+          :message="command"
+          :duration="5000"
+          position="top"
+          animated="true"
+          color="dark"
+          @didDismiss="() => (showCommand = false)"
+        ></ion-toast>
+      </ion-fab>
     </ion-content>
   </ion-page>
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 import {
   IonCard,
   IonCardContent,
@@ -77,10 +97,19 @@ import {
   IonRow,
   IonCol,
   IonAlert,
+  IonFab,
+  IonFabButton,
+  IonIcon,
+  IonToast,
 } from "@ionic/vue";
 import LineChart from "./components/LineChart.vue";
 import ApiService from "./api/request.js";
 import ColorPicker from "./components/ColorPicker.vue";
+import { Vosk } from "./api/vosk.js";
+import { mic, micOff } from "ionicons/icons";
+import { registerPlugin } from "@capacitor/core";
+
+const VoskPlugin = registerPlugin("VoskPlugin");
 
 const temperature = {
   labels: [],
@@ -124,6 +153,9 @@ const lastLight = ref(null);
 const lastNoise = ref(null);
 const ledStatus = ref(false);
 const showSetColorError = ref(false);
+const isListening = ref(false);
+const showCommand = ref(false);
+const command = ref("");
 
 const requestData = async () => {
   let data = await ApiService.getData("temperature");
@@ -172,7 +204,52 @@ const setColor = (r, g, b) => {
 
 requestData();
 
+const toggleRec = () => {
+  if (isListening.value) {
+    stopRec();
+  } else {
+    startRec();
+  }
+};
+
+const startRec = () => {
+  isListening.value = true;
+  Vosk.startRecognition();
+};
+const stopRec = () => {
+  isListening.value = false;
+  Vosk.stopRecognition();
+};
+
 onMounted(() => {
+  VoskPlugin.addListener("transcriptionUpdate", (data) => {
+    if (data.transcription) {
+      const parsedObject = JSON.parse(data.transcription);
+      console.log(parsedObject);
+      if (parsedObject) {
+        command.value = "Comando inviato: " + parsedObject.text;
+        showCommand.value = true;
+        ApiService.sendCommand(parsedObject.text);
+      }
+    }
+    isListening.value = false;
+  });
+
+  VoskPlugin.addListener("permissionGranted", () => {
+    log.value = {
+      message: "Premesso concesso",
+      type: "info",
+    };
+    Vosk.startRecognition();
+  });
+
+  VoskPlugin.addListener("permissionDenied", () => {
+    log.value = {
+      message: "Premesso negato",
+      type: "error",
+    };
+  });
+
   setInterval(requestData, 5000);
   ApiService.getLedStatus().then((data) => {
     if (!data || data.status != "success") {
@@ -181,6 +258,10 @@ onMounted(() => {
 
     ledStatus.value = data.active;
   });
+});
+
+onUnmounted(() => {
+  VoskPlugin.removeAllListeners();
 });
 </script>
 
