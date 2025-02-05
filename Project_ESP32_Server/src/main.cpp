@@ -64,6 +64,48 @@ void tempSetup()
   server.on("/data", HTTP_GET, [](AsyncWebServerRequest *request)
             { request->send(200, "application/json", latestData); });
 
+  server.on("/temperature", HTTP_GET, [](AsyncWebServerRequest *request)
+            {  
+              Serial2.println("GET_TEMP");
+              unsigned long timeout = millis() + 1000; // Timeout di 1 secondo
+              while (!Serial2.available()) {
+                  if (millis() > timeout) {
+                      request->send(500, "application/json", "{\"error\":\"Timeout MSP432\"}");
+                      return;
+                  }
+              }
+              String receivedData = Serial2.readStringUntil('\n');
+              processData(receivedData);
+              request->send(200, "application/json", latestData); });
+
+  server.on("/noise", HTTP_GET, [](AsyncWebServerRequest *request)
+            { request->send(200, "application/json", latestData); });
+
+  server.on("/light", HTTP_GET, [](AsyncWebServerRequest *request)
+            { request->send(200, "application/json", latestData); });
+
+  server.on("/led/on", HTTP_GET, [](AsyncWebServerRequest *request)
+            { request->send(200, "application/json", latestData); });
+
+  server.on("/led/off", HTTP_GET, [](AsyncWebServerRequest *request)
+            { request->send(200, "application/json", latestData); });
+
+  server.on("/led-color", HTTP_GET, [](AsyncWebServerRequest *request)
+            {
+    if (request->hasParam("r")) {
+        String red = request->getParam("r")->value();
+    }
+    if (request->hasParam("r")) {
+        String green = request->getParam("g")->value();
+    }
+    if (request->hasParam("r")) {
+        String blue = request->getParam("b")->value();
+    }
+    request->send(200, "application/json", latestData); });
+
+  server.on("/led-status", HTTP_GET, [](AsyncWebServerRequest *request)
+            { request->send(200, "application/json", latestData); });
+
   server.begin();
 }
 
@@ -77,7 +119,6 @@ void setup()
 // get the current time and date using wifi
 String getFormattedTimestamp()
 {
-
   struct tm timeinfo;
   if (!getLocalTime(&timeinfo))
   {
@@ -102,11 +143,11 @@ void processData(String data)
   }
 
   String type = data.substring(0, firstComma);
-  String temperature = data.substring(firstComma + 1);
+  String value = data.substring(firstComma + 1);
 
   StaticJsonDocument<200> jsonDoc;
   jsonDoc["type"] = type;
-  jsonDoc["temperature"] = temperature;
+  jsonDoc["value"] = value;
   jsonDoc["time"] = getFormattedTimestamp();
 
   latestData = "";

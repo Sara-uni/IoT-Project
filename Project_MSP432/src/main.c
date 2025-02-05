@@ -9,14 +9,15 @@
 #include <init.h>
 
 // Variable for storing temperature value
-//float temp;
+// float temp;
 
-void temperatureMode(){
-    // Obtain temperature value and convert it into CELSIUS 
+void sendTemperature()
+{
+    // Obtain temperature value and convert it into CELSIUS
     float temp = (TMP006_getTemp() - 32) / 1.8;
-    
+
     char string[10];
-    _showTextTemp(string, temp); //shows text on the display
+    _showTextTemp(string, temp); // shows text on the display
 
     char tempStr[10];
     snprintf(tempStr, sizeof(string), "%.2f", temp);
@@ -27,14 +28,21 @@ void temperatureMode(){
     // send the string via UART
     UART_sendString(uartBuffer);
 }
- 
+
 int main(void)
 {
     _hwInit();
     _uartInit();
 
+    char command[20];
     while (1)
     {
-        temperatureMode();
+        if (UART_receiveString(command, sizeof(command)))
+        {
+            if (strcmp(command, "GET_TEMP") == 0)
+            {
+                sendTemperature();
+            }
+        }
     }
 }
