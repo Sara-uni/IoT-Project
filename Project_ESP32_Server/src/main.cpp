@@ -126,10 +126,26 @@ void tempSetup()
               request->send(200, "application/json", latestData); });
 
   server.on("/led/on", HTTP_GET, [](AsyncWebServerRequest *request)
-            { request->send(500, "application/json", "{\"error\":\"Not Implemented\"}"); });
+            { Serial2.println("LED_ON");
+              unsigned long timeout = millis() + 1000; // Timeout di 1 secondo
+              while (!Serial2.available()) {
+                  if (millis() > timeout) {
+                      request->send(500, "application/json", "{\"error\":\"Timeout MSP432\"}");
+                      return;
+                  }
+              }
+              request->send(200, "application/json", "{\"success\":\"The led is on!\"}"); });
 
   server.on("/led/off", HTTP_GET, [](AsyncWebServerRequest *request)
-            { request->send(500, "application/json", "{\"error\":\"Not Implemented\"}"); });
+            { Serial2.println("LED_OFF");
+              unsigned long timeout = millis() + 1000; // Timeout di 1 secondo
+              while (!Serial2.available()) {
+                  if (millis() > timeout) {
+                      request->send(500, "application/json", "{\"error\":\"Timeout MSP432\"}");
+                      return;
+                  }
+              }
+              request->send(200, "application/json", "{\"success\":\"The led is off!\"}"); });
 
   server.on("/led-color", HTTP_GET, [](AsyncWebServerRequest *request)
             {
@@ -146,13 +162,30 @@ void tempSetup()
                 if (request->hasParam("b")) {
                     blue = request->getParam("b")->value();
                 }
-                char response[50];
-                snprintf(response, sizeof(response), "rgb(%s, %s, %s)", red.c_str(), green.c_str(), blue.c_str());
-            
-                request->send(200, "application/json", response); });
+                char command[50];
+                snprintf(command, sizeof(command), "SET_COLOR(%s, %s, %s)", red.c_str(), green.c_str(), blue.c_str());
+                Serial2.println(command);
+                unsigned long timeout = millis() + 1000; // Timeout di 1 secondo
+                while (!Serial2.available()) {
+                    if (millis() > timeout) {
+                        request->send(500, "application/json", "{\"error\":\"Timeout MSP432\"}");
+                        return;
+                    }
+                }
+                request->send(200, "application/json", "{\"success\":\"Changed color!\"}"); });
 
   server.on("/led-status", HTTP_GET, [](AsyncWebServerRequest *request)
-            { request->send(500, "application/json", "{\"error\":\"Not Implemented\"}"); });
+            { Serial2.println("GET_LED");
+              unsigned long timeout = millis() + 1000; // Timeout di 1 secondo
+              while (!Serial2.available()) {
+                  if (millis() > timeout) {
+                      request->send(500, "application/json", "{\"error\":\"Timeout MSP432\"}");
+                      return;
+                  }
+              }
+              String receivedData = Serial2.readStringUntil('\n');
+              processData(receivedData);
+              request->send(200, "application/json", latestData); });
 
   server.begin();
 }
@@ -166,13 +199,4 @@ void setup()
 
 void loop()
 {
-  if (Serial2.available())
-  {
-
-    String receivedData = Serial2.readStringUntil('\n');
-
-    receivedData.trim();
-    Serial.println("received: " + receivedData); // you can check the arriving data by monitoring the port
-    processData(receivedData);
-  }
 }
