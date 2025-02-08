@@ -20,7 +20,6 @@ void _temperatureSensorInit()
     __delay_cycles(100000);
 }
 
-
 //---------------------------------------------------
 
 Graphics_Context g_sContext;
@@ -40,7 +39,6 @@ void _graphicsInit()
     Graphics_setBackgroundColor(&g_sContext, GRAPHICS_COLOR_WHITE);
     GrContextFontSet(&g_sContext, &g_sFontFixed6x8);
     Graphics_clearDisplay(&g_sContext);
-
 }
 
 void _hwInit()
@@ -64,23 +62,33 @@ void _hwInit()
     CS_initClockSignal(CS_ACLK, CS_REFOCLK_SELECT, CS_CLOCK_DIVIDER_1);
 
     /* Configuring P1.0 as output */
-    //GPIO_setAsOutputPin(GPIO_PORT_P1, GPIO_PIN0);
-    //GPIO_setOutputLowOnPin(GPIO_PORT_P1, GPIO_PIN0);
+    // GPIO_setAsOutputPin(GPIO_PORT_P1, GPIO_PIN0);
+    // GPIO_setOutputLowOnPin(GPIO_PORT_P1, GPIO_PIN0);
 
     _graphicsInit();
     _temperatureSensorInit();
     _uartInit();
 }
 
-void _showTextTemp(char *string, float temp){
-    Graphics_drawStringCentered(&g_sContext, (int8_t *) "Temperature:",
-    AUTO_STRING_LENGTH,64, 30, OPAQUE_TEXT);
+void _showTextTemp(char *string, float temp)
+{
+    Graphics_drawStringCentered(&g_sContext, (int8_t *)"CIAOO\nTemperature:",
+                                AUTO_STRING_LENGTH, 64, 30, OPAQUE_TEXT);
 
     sprintf(string, "%.2f", temp);
-    Graphics_drawStringCentered(&g_sContext, (int8_t *) string, 5, 55, 70,
-    OPAQUE_TEXT);
+    Graphics_drawStringCentered(&g_sContext, (int8_t *)string, 5, 55, 70,
+                                OPAQUE_TEXT);
 
     sprintf(string, "C");
-    Graphics_drawStringCentered(&g_sContext, (int8_t *) string, 5, 80, 70,
-    OPAQUE_TEXT);
+    Graphics_drawStringCentered(&g_sContext, (int8_t *)string, 5, 80, 70,
+                                OPAQUE_TEXT);
+}
+
+void _showIP(char *ip)
+{
+    Graphics_drawStringCentered(&g_sContext, (int8_t *)"IP:",
+                                AUTO_STRING_LENGTH, 64, 30, OPAQUE_TEXT);
+
+    Graphics_drawStringCentered(&g_sContext, (int8_t *)ip, 5, 55, 70,
+                                OPAQUE_TEXT);
 }

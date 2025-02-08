@@ -7,6 +7,7 @@
 
 #include <uart.h>
 #include <init.h>
+#include <string.h>
 
 // Variable for storing temperature value
 // float temp;
@@ -23,7 +24,7 @@ void sendTemperature()
     snprintf(tempStr, sizeof(string), "%.2f", temp);
 
     char uartBuffer[128];
-    snprintf(uartBuffer, sizeof(uartBuffer), "temperature,%s\n", tempStr);
+    snprintf(uartBuffer, sizeof(uartBuffer), "temperatureHII,%s\n", tempStr);
 
     // send the string via UART
     UART_sendString(uartBuffer);
@@ -37,7 +38,9 @@ int main(void)
     char command[20];
     while (1)
     {
-        if (UART_receiveString(command, sizeof(command)))
+        sendTemperature();
+        UART_receiveString(command, sizeof(command));
+        if (command)
         {
             if (strcmp(command, "GET_TEMP") == 0)
             {

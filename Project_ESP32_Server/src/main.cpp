@@ -9,8 +9,8 @@
 AsyncWebServer server(80);
 
 // parameters for a existing wifi network (required to get the timestamp)
-const char *ssidWifi = "FRITZ!Box 7590 UV";
-const char *pswWifi = "73391472042417975218";
+const char *ssidWifi = "WRL#12IRIDEOS";
+const char *pswWifi = "Matty!!2003";
 const char *ntpServer = "pool.ntp.org";
 const long gmtOffset_sec = 0;
 const int daylightOffset_sec = 0;
@@ -21,6 +21,44 @@ const char *password = "123456789";
 
 // variable storing the last received data
 String latestData = "{}";
+
+// get the current time and date using wifi
+String getFormattedTimestamp()
+{
+  struct tm timeinfo;
+  if (!getLocalTime(&timeinfo))
+  {
+    Serial.println("TIMESTAMP Error");
+    return "0000-00-00T00:00:00Z";
+  }
+
+  char buffer[30];
+  strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%SZ", &timeinfo); // ISO 8601 format
+  return String(buffer);
+}
+
+// give the right JSON format to the data we acquired
+void processData(String data)
+{
+  int firstComma = data.indexOf(',');
+
+  if (firstComma == -1)
+  {
+    Serial.println("Wrong data format");
+    return;
+  }
+
+  String type = data.substring(0, firstComma);
+  String value = data.substring(firstComma + 1);
+
+  StaticJsonDocument<200> jsonDoc;
+  jsonDoc["type"] = type;
+  jsonDoc["value"] = value;
+  jsonDoc["time"] = getFormattedTimestamp();
+
+  latestData = "";
+  serializeJson(jsonDoc, latestData);
+}
 
 void tempSetup()
 {
@@ -114,44 +152,6 @@ void setup()
   Serial.begin(115200);
   Serial2.begin(115200, SERIAL_8N1, RX, TX);
   tempSetup();
-}
-
-// get the current time and date using wifi
-String getFormattedTimestamp()
-{
-  struct tm timeinfo;
-  if (!getLocalTime(&timeinfo))
-  {
-    Serial.println("TIMESTAMP Error");
-    return "0000-00-00T00:00:00Z";
-  }
-
-  char buffer[30];
-  strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%SZ", &timeinfo); // ISO 8601 format
-  return String(buffer);
-}
-
-// give the right JSON format to the data we acquired
-void processData(String data)
-{
-  int firstComma = data.indexOf(',');
-
-  if (firstComma == -1)
-  {
-    Serial.println("Wrong data format");
-    return;
-  }
-
-  String type = data.substring(0, firstComma);
-  String value = data.substring(firstComma + 1);
-
-  StaticJsonDocument<200> jsonDoc;
-  jsonDoc["type"] = type;
-  jsonDoc["value"] = value;
-  jsonDoc["time"] = getFormattedTimestamp();
-
-  latestData = "";
-  serializeJson(jsonDoc, latestData);
 }
 
 void loop()
