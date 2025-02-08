@@ -1,6 +1,6 @@
 import { CapacitorHttp } from "@capacitor/core";
 
-const API_BASE_URL = "http://192.168.190.67:3000"; //IP ESP
+const API_BASE_URL = "http://10.254.254.109"; //IP ESP
 
 const header = {
   url: API_BASE_URL,
@@ -13,7 +13,7 @@ const header = {
 const getData = async (data) => {
   try {
     const options = header;
-    options.url = `${API_BASE_URL}/data/${data}`;
+    options.url = `${API_BASE_URL}/${data}`;
     const response = await CapacitorHttp.get(options);
     return response.data;
   } catch (error) {

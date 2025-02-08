@@ -72,7 +72,7 @@ void _hwInit()
 
 void _showTextTemp(char *string, float temp)
 {
-    Graphics_drawStringCentered(&g_sContext, (int8_t *)"CIAOO\nTemperature:",
+    Graphics_drawStringCentered(&g_sContext, (int8_t *)"Temperature:",
                                 AUTO_STRING_LENGTH, 64, 30, OPAQUE_TEXT);
 
     sprintf(string, "%.2f", temp);
@@ -84,11 +84,11 @@ void _showTextTemp(char *string, float temp)
                                 OPAQUE_TEXT);
 }
 
-void _showIP(char *ip)
+void _showText(char *title, char *text)
 {
-    Graphics_drawStringCentered(&g_sContext, (int8_t *)"IP:",
-                                AUTO_STRING_LENGTH, 64, 30, OPAQUE_TEXT);
-
-    Graphics_drawStringCentered(&g_sContext, (int8_t *)ip, 5, 55, 70,
+    Graphics_clearDisplay(&g_sContext);
+    Graphics_drawStringCentered(&g_sContext, (int8_t *)title, AUTO_STRING_LENGTH, 65, 50,
+                                OPAQUE_TEXT);
+    Graphics_drawStringCentered(&g_sContext, (int8_t *)text, AUTO_STRING_LENGTH, 65, 70,
                                 OPAQUE_TEXT);
 }

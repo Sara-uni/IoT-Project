@@ -12,6 +12,7 @@
         scale-y="Temperature (°C)"
         unit="°C"
         :new-data="lastTemperature"
+        :new-time="lastTemperatureTime"
       />
       <LineChart
         title="Ambient Light"
@@ -19,6 +20,7 @@
         scale-y="Light (lux)"
         unit="lux"
         :new-data="lastLight"
+        :new-time="lastLightTime"
       />
       <LineChart
         title="Ambient Noise"
@@ -26,6 +28,7 @@
         scale-y="Noise (dB)"
         unit="dB"
         :new-data="lastNoise"
+        :new-time="lastNoiseTime"
       />
       <ion-card style="margin-bottom: 10rem">
         <ion-card-header>
@@ -151,6 +154,9 @@ const ambientNoise = {
 const lastTemperature = ref(null);
 const lastLight = ref(null);
 const lastNoise = ref(null);
+const lastTemperatureTime = ref(null);
+const lastLightTime = ref(null);
+const lastNoiseTime = ref(null);
 const ledStatus = ref(false);
 const showSetColorError = ref(false);
 const isListening = ref(false);
@@ -159,22 +165,25 @@ const command = ref("");
 
 const requestData = async () => {
   let data = await ApiService.getData("temperature");
-  if (data && data.status === "success") {
+  if (data && !data.error) {
     lastTemperature.value = data.value;
+    lastTemperatureTime.value = new Date(data.time);
   } else {
     console.error("Error:", data.message);
   }
 
   data = await ApiService.getData("light");
-  if (data && data.status === "success") {
+  if (data && !data.error) {
     lastLight.value = data.value;
+    lastLightTime.value = new Date(data.time);
   } else {
     console.error("Error:", data.message);
   }
 
   data = await ApiService.getData("noise");
-  if (data && data.status === "success") {
+  if (data && !data.error) {
     lastNoise.value = data.value;
+    lastNoiseTime.value = new Date(data.time);
   } else {
     console.error("Error:", data.message);
   }

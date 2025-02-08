@@ -81,26 +81,9 @@ void tempSetup()
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
             {
     String html = "<html><body>";
-    html += "<h1>ESP32 Web Server</h1>";
-    html += "<p>Endpoint dati: <b>/data</b></p>";
-    html += "<div id='data'></div>";
-    html += "<script>";
-    html += "function fetchData() {";
-    html += "  fetch('/data')";  //server request
-    html += "    .then(response => response.json())";
-    html += "    .then(data => {";
-    html += "      document.getElementById('data').innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';";
-    html += "    });";
-    html += "}";
-    html += "setInterval(fetchData, 1000);";  //update after a second
-    html += "fetchData();";
-    html += "</script>";
+    html += "<h1>ESP32 Web Server Attivo</h1>";
     html += "</body></html>";
     request->send(200, "text/html", html); });
-
-  // get the most recent data
-  server.on("/data", HTTP_GET, [](AsyncWebServerRequest *request)
-            { request->send(200, "application/json", latestData); });
 
   server.on("/temperature", HTTP_GET, [](AsyncWebServerRequest *request)
             {  
@@ -117,32 +100,59 @@ void tempSetup()
               request->send(200, "application/json", latestData); });
 
   server.on("/noise", HTTP_GET, [](AsyncWebServerRequest *request)
-            { request->send(200, "application/json", latestData); });
+            { Serial2.println("GET_NOISE");
+              unsigned long timeout = millis() + 1000; // Timeout di 1 secondo
+              while (!Serial2.available()) {
+                  if (millis() > timeout) {
+                      request->send(500, "application/json", "{\"error\":\"Timeout MSP432\"}");
+                      return;
+                  }
+              }
+              String receivedData = Serial2.readStringUntil('\n');
+              processData(receivedData);
+              request->send(200, "application/json", latestData); });
 
   server.on("/light", HTTP_GET, [](AsyncWebServerRequest *request)
-            { request->send(200, "application/json", latestData); });
+            { Serial2.println("GET_LIGHT");
+              unsigned long timeout = millis() + 1000; // Timeout di 1 secondo
+              while (!Serial2.available()) {
+                  if (millis() > timeout) {
+                      request->send(500, "application/json", "{\"error\":\"Timeout MSP432\"}");
+                      return;
+                  }
+              }
+              String receivedData = Serial2.readStringUntil('\n');
+              processData(receivedData);
+              request->send(200, "application/json", latestData); });
 
   server.on("/led/on", HTTP_GET, [](AsyncWebServerRequest *request)
-            { request->send(200, "application/json", latestData); });
+            { request->send(200, "application/json", "ACCESO"); });
 
   server.on("/led/off", HTTP_GET, [](AsyncWebServerRequest *request)
-            { request->send(200, "application/json", latestData); });
+            { request->send(200, "application/json", "SPENTO"); });
 
   server.on("/led-color", HTTP_GET, [](AsyncWebServerRequest *request)
             {
-    if (request->hasParam("r")) {
-        String red = request->getParam("r")->value();
-    }
-    if (request->hasParam("r")) {
-        String green = request->getParam("g")->value();
-    }
-    if (request->hasParam("r")) {
-        String blue = request->getParam("b")->value();
-    }
-    request->send(200, "application/json", latestData); });
+                String red = "0";
+                String green = "0";
+                String blue = "0";
+            
+                if (request->hasParam("r")) {
+                    red = request->getParam("r")->value();
+                }
+                if (request->hasParam("g")) {
+                    green = request->getParam("g")->value();
+                }
+                if (request->hasParam("b")) {
+                    blue = request->getParam("b")->value();
+                }
+                char response[50];
+                snprintf(response, sizeof(response), "rgb(%s, %s, %s)", red.c_str(), green.c_str(), blue.c_str());
+            
+                request->send(200, "application/json", response); });
 
   server.on("/led-status", HTTP_GET, [](AsyncWebServerRequest *request)
-            { request->send(200, "application/json", latestData); });
+            { request->send(200, "application/json", "ON"); });
 
   server.begin();
 }

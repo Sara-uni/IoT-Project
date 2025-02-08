@@ -88,6 +88,9 @@ const props = defineProps({
   newData: {
     type: Number,
   },
+  newTime: {
+    type: Date,
+  },
 });
 
 const chartRef = ref(null);
@@ -132,7 +135,7 @@ const options = computed(() => ({
       callbacks: {
         label: function (context) {
           let value = context.raw;
-          return `${value} ${props.unit}`; // Mostra l'unità di misura nei tooltip
+          return `${value} ${props.unit}`;
         },
       },
     },
@@ -158,7 +161,6 @@ const goToLatestData = () => {
     const totalDataPoints = chartData.labels.length;
 
     if (totalDataPoints > 0) {
-      // Settiamo manualmente la scala X per visualizzare solo i 5 ultimi dati
       chart.scales.x.options.min =
         totalDataPoints - maxDataPoints > 0
           ? totalDataPoints - maxDataPoints
@@ -171,10 +173,10 @@ const goToLatestData = () => {
 };
 
 watch(
-  () => props.newData,
+  () => props.newTime,
   () => {
     if (chartRef.value && props.newData) {
-      chartData.labels.push(new Date().toLocaleTimeString());
+      chartData.labels.push(props.newTime.toLocaleTimeString());
       chartData.datasets[0].data.push(props.newData);
       chartRef.value.chart.update();
 
