@@ -5,6 +5,6 @@ void _graphicsInit();
 
 void _hwInit();
 
-void _showTextTemp(char *string, float temp);
+void _showText(char *title, char *text);
 
 #endif

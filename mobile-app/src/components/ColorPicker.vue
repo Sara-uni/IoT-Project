@@ -69,16 +69,19 @@ const emitColor = () => {
 };
 
 onMounted(() => {
-  ApiService.getLedStatus().then((data) => {
-    if (!data || data.status !== "success") {
-      return;
-    }
-    if (data.active) {
-      red.value = data.r;
-      green.value = data.g;
-      blue.value = data.b;
-    }
-  });
+  // setTimeout(
+  //   ApiService.getLedStatus().then((data) => {
+  //     if (!data || data.error) {
+  //       return;
+  //     }
+  //     if (data.active) {
+  //       red.value = data.r;
+  //       green.value = data.g;
+  //       blue.value = data.b;
+  //     }
+  //   }),
+  //   2000
+  // );
 });
 </script>
 <style scoped>

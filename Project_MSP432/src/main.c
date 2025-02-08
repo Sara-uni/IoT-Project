@@ -9,8 +9,16 @@
 #include <init.h>
 #include <string.h>
 
-// Variable for storing temperature value
-// float temp;
+bool red_led, green_led, blue_led;
+
+void _initLED()
+{
+    P2DIR |= (BIT0 | BIT1 | BIT2);
+    P2OUT &= ~(BIT0 | BIT1 | BIT2);
+    red_led = false;
+    green_led = false;
+    blue_led = false;
+}
 
 void sendTemperature()
 {
@@ -66,10 +74,57 @@ void sendLight()
     UART_sendString(uartBuffer);
 }
 
+void setColor(char *color)
+{
+    int r, g, b;
+    sscanf(color, "%d,%d,%d", &r, &g, &b);
+    // setLEDColor(r, g, b);
+}
+
+void turnRed(bool mode)
+{
+    red_led = mode;
+    if (mode)
+    {
+        P2OUT |= BIT0;
+    }
+    else
+    {
+        P2OUT &= ~BIT0;
+    }
+}
+
+void turnGreen(bool mode)
+{
+    green_led = mode;
+    if (mode)
+    {
+        P2OUT |= BIT1;
+    }
+    else
+    {
+        P2OUT &= ~BIT1;
+    }
+}
+
+void turnBlue(bool mode)
+{
+    blue_led = mode;
+    if (mode)
+    {
+        P2OUT |= BIT2;
+    }
+    else
+    {
+        P2OUT &= ~BIT2;
+    }
+}
+
 int main(void)
 {
     _hwInit();
     _uartInit();
+    _initLED();
 
     char command[20];
     while (1)
@@ -88,6 +143,41 @@ int main(void)
             if (strcmp(command, "GET_NOISE") == 0)
             {
                 sendNoise();
+            }
+            if (strcmp(command, "LED_ON") == 0)
+            {
+                UART_sendString("OK");
+                turnRed(true);
+                turnGreen(true);
+                turnBlue(true);
+            }
+            if (strcmp(command, "LED_OFF") == 0)
+            {
+                UART_sendString("OK");
+                turnRed(false);
+                turnGreen(false);
+                turnBlue(false);
+            }
+            if (strcmp(command, "SET_COLOR") == 0)
+            {
+                char colorCommand[20];
+                UART_receiveString(colorCommand, sizeof(colorCommand));
+                setColor(colorCommand);
+            }
+            if (strcmp(command, "GET_LED") == 0)
+            {
+                char response[40];
+                if (red_led || green_led || blue_led)
+                {
+                    sprintf(response, "true,255,255,255");
+                }
+                else
+                {
+                    sprintf(response, "false,");
+                }
+                sprintf(response, "%s\n", response);
+                _showText("STATUS: ", response);
+                UART_sendString(response);
             }
         }
     }

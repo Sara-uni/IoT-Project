@@ -60,6 +60,44 @@ void processData(String data)
   serializeJson(jsonDoc, latestData);
 }
 
+void processLed(String data)
+{
+  int firstComma = data.indexOf(',');
+
+  if (firstComma == -1)
+  {
+    Serial.println("Wrong data format");
+    return;
+  }
+
+  String active = data.substring(0, firstComma);
+  String colors = data.substring(firstComma + 1);
+
+  StaticJsonDocument<200> jsonDoc;
+  jsonDoc["active"] = active;
+
+  if (active == "true")
+  {
+    int redIndex = colors.indexOf(',');
+    String red = colors.substring(0, redIndex);
+    colors = colors.substring(redIndex + 1);
+    jsonDoc["r"] = red;
+
+    int greenIndex = colors.indexOf(',');
+    String green = colors.substring(0, greenIndex);
+    colors = colors.substring(greenIndex + 1);
+    jsonDoc["g"] = green;
+
+    int blueIndex = colors.indexOf(',');
+    String blue = colors.substring(0, blueIndex);
+    colors = colors.substring(blueIndex + 1);
+    jsonDoc["b"] = blue;
+  }
+
+  latestData = "";
+  serializeJson(jsonDoc, latestData);
+}
+
 void tempSetup()
 {
   // existing wifi configuration
@@ -154,14 +192,29 @@ void tempSetup()
                 String blue = "0";
             
                 if (request->hasParam("r")) {
-                    red = request->getParam("r")->value();
+                  red = request->getParam("r")->value();
+                  if (red.toInt() < 0 || red.toInt() > 255) {
+                    request->send(400, "application/json", "{\"error\":\"Invalid red value\"}");
+                    return;
+                  }
                 }
+              
                 if (request->hasParam("g")) {
-                    green = request->getParam("g")->value();
+                  green = request->getParam("g")->value();
+                  if (green.toInt() < 0 || green.toInt() > 255) {
+                    request->send(400, "application/json", "{\"error\":\"Invalid green value\"}");
+                    return;
+                  }
                 }
+                  
                 if (request->hasParam("b")) {
                     blue = request->getParam("b")->value();
+                    if (blue.toInt() < 0 || blue.toInt() > 255) {
+                        request->send(400, "application/json", "{\"error\":\"Invalid blue value\"}");
+                        return;
+                    }
                 }
+                
                 char command[50];
                 snprintf(command, sizeof(command), "SET_COLOR(%s, %s, %s)", red.c_str(), green.c_str(), blue.c_str());
                 Serial2.println(command);
@@ -184,7 +237,7 @@ void tempSetup()
                   }
               }
               String receivedData = Serial2.readStringUntil('\n');
-              processData(receivedData);
+              processLed(receivedData);
               request->send(200, "application/json", latestData); });
 
   server.begin();
@@ -199,4 +252,13 @@ void setup()
 
 void loop()
 {
+  if (Serial2.available())
+  {
+
+    String receivedData = Serial2.readStringUntil('\n');
+
+    receivedData.trim();
+    Serial.println("received: " + receivedData); // you can check the arriving data by monitoring the port
+    processData(receivedData);
+  }
 }

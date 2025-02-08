@@ -214,6 +214,7 @@ const requestData = async () => {
 };
 
 const toggleLed = () => {
+  console.log("TRY TO SET LED: " + ledStatus.value ? "on" : "off");
   ApiService.toggleLed(ledStatus.value ? "on" : "off")
     .then((data) => {
       if (!data || data.error) {
@@ -302,7 +303,7 @@ onMounted(() => {
 
   setInterval(requestData, 5000);
   ApiService.getLedStatus().then((data) => {
-    if (!data || data.status != "success") {
+    if (!data || data.error) {
       return;
     }
 
