@@ -50,7 +50,7 @@ void sendNoise()
 
 void sendLight()
 {
-    float light = ;
+    float light = 1543.49;
 
     char string[20];
     sprintf(string, "%.2f lux", light);

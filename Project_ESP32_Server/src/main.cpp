@@ -126,10 +126,10 @@ void tempSetup()
               request->send(200, "application/json", latestData); });
 
   server.on("/led/on", HTTP_GET, [](AsyncWebServerRequest *request)
-            { request->send(200, "application/json", "ACCESO"); });
+            { request->send(500, "application/json", "{\"error\":\"Not Implemented\"}"); });
 
   server.on("/led/off", HTTP_GET, [](AsyncWebServerRequest *request)
-            { request->send(200, "application/json", "SPENTO"); });
+            { request->send(500, "application/json", "{\"error\":\"Not Implemented\"}"); });
 
   server.on("/led-color", HTTP_GET, [](AsyncWebServerRequest *request)
             {
@@ -152,7 +152,7 @@ void tempSetup()
                 request->send(200, "application/json", response); });
 
   server.on("/led-status", HTTP_GET, [](AsyncWebServerRequest *request)
-            { request->send(200, "application/json", "ON"); });
+            { request->send(500, "application/json", "{\"error\":\"Not Implemented\"}"); });
 
   server.begin();
 }
