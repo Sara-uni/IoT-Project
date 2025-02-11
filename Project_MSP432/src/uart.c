@@ -4,17 +4,17 @@
 //------------------UART config----------------------------
 
 const eUSCI_UART_Config uartConfig =
-{
-    EUSCI_A_UART_CLOCKSOURCE_SMCLK,          // Sorgente di clock SMCLK
-    13,                                      // BRDIV = 13
-    0,                                       // UCxBRF = 0
-    37,                                      // UCxBRS = 37
-    EUSCI_A_UART_NO_PARITY,                  // Nessuna parità
-    EUSCI_A_UART_LSB_FIRST,                  // MSB First
-    EUSCI_A_UART_ONE_STOP_BIT,               // One stop bit
-    EUSCI_A_UART_MODE,                       // Modalità UART
-    EUSCI_A_UART_OVERSAMPLING_BAUDRATE_GENERATION,  // Oversampling abilitato
-    //EUSCI_A_UART_8_BIT_LEN                   // 8 bit di lunghezza dati
+    {
+        EUSCI_A_UART_CLOCKSOURCE_SMCLK,                // Sorgente di clock SMCLK
+        13,                                            // BRDIV = 13
+        0,                                             // UCxBRF = 0
+        37,                                            // UCxBRS = 37
+        EUSCI_A_UART_NO_PARITY,                        // Nessuna parità
+        EUSCI_A_UART_LSB_FIRST,                        // MSB First
+        EUSCI_A_UART_ONE_STOP_BIT,                     // One stop bit
+        EUSCI_A_UART_MODE,                             // Modalità UART
+        EUSCI_A_UART_OVERSAMPLING_BAUDRATE_GENERATION, // Oversampling abilitato
+                                                       // EUSCI_A_UART_8_BIT_LEN                   // 8 bit di lunghezza dati
 };
 
 void _uartInit()
@@ -26,7 +26,7 @@ void _uartInit()
      * - P1.0 configurato come uscita (LED).
      */
     GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P1,
-             GPIO_PIN2 | GPIO_PIN3, GPIO_PRIMARY_MODULE_FUNCTION);
+                                               GPIO_PIN2 | GPIO_PIN3, GPIO_PRIMARY_MODULE_FUNCTION);
 
     /* Impostazione del DCO a 24MHz (necessario aumentare il Vcore) -> CPU a 24 MHz! */
     FlashCtl_setWaitState(FLASH_BANK0, 1);
@@ -46,13 +46,32 @@ void _uartInit()
     Interrupt_enableSleepOnIsrExit();
 }
 
-void UART_sendString(char* str) {
-    // Cicla attraverso ogni carattere della stringa
-    while (*str != '\0') {
-        // Invia il carattere via UART
+void UART_sendString(char *str)
+{
+    while (*str != '\0')
+    {
         UART_transmitData(EUSCI_A0_BASE, *str);
-        // Aspetta che il carattere venga trasmesso prima di passare al successivo
-        while (!(EUSCI_A0->IFG & EUSCI_A_IFG_TXIFG));
-        str++;  // Passa al prossimo carattere
+        while (!(EUSCI_A0->IFG & EUSCI_A_IFG_TXIFG))
+            ;
+        str++;
     }
+}
+
+void UART_receiveString(char *buffer, int maxLength)
+{
+    uint16_t index = 0;
+
+    while (index < (maxLength - 1))
+    {
+        while (!(EUSCI_A0->IFG & EUSCI_A_IFG_RXIFG))
+            ;
+        char receivedChar = UART_receiveData(EUSCI_A0_BASE);
+        if (receivedChar == '\n' || receivedChar == '\r')
+        {
+            break;
+        }
+        buffer[index++] = receivedChar;
+    }
+
+    buffer[index] = '\0';
 }

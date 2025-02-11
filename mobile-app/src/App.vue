@@ -2,16 +2,41 @@
   <ion-page>
     <ion-header>
       <ion-toolbar>
+        <ion-buttons slot="primary">
+          <ion-button id="ip-settings">
+            <ion-icon
+              slot="icon-only"
+              :md="settingsSharp"
+              color="dark"
+            ></ion-icon>
+          </ion-button>
+        </ion-buttons>
         <ion-title>IoT Dashboard</ion-title>
       </ion-toolbar>
     </ion-header>
     <ion-content>
+      <ion-alert
+        trigger="ip-settings"
+        header="Insert the IP:"
+        :buttons="[
+          'Cancel',
+          { text: 'Confirm', handler: (data) => setIp(data.ip) },
+        ]"
+        :inputs="[
+          {
+            name: 'ip',
+            placeholder: '192.168.0.1',
+            value: getIp(),
+          },
+        ]"
+      ></ion-alert>
       <LineChart
         title="Temperature"
         :data="temperature"
         scale-y="Temperature (°C)"
         unit="°C"
         :new-data="lastTemperature"
+        :new-time="lastTemperatureTime"
       />
       <LineChart
         title="Ambient Light"
@@ -19,6 +44,7 @@
         scale-y="Light (lux)"
         unit="lux"
         :new-data="lastLight"
+        :new-time="lastLightTime"
       />
       <LineChart
         title="Ambient Noise"
@@ -26,6 +52,7 @@
         scale-y="Noise (dB)"
         unit="dB"
         :new-data="lastNoise"
+        :new-time="lastNoiseTime"
       />
       <ion-card style="margin-bottom: 10rem">
         <ion-card-header>
@@ -106,7 +133,7 @@ import LineChart from "./components/LineChart.vue";
 import ApiService from "./api/request.js";
 import ColorPicker from "./components/ColorPicker.vue";
 import { Vosk } from "./api/vosk.js";
-import { mic, micOff } from "ionicons/icons";
+import { mic, micOff, settingsSharp } from "ionicons/icons";
 import { registerPlugin } from "@capacitor/core";
 
 const VoskPlugin = registerPlugin("VoskPlugin");
@@ -151,6 +178,9 @@ const ambientNoise = {
 const lastTemperature = ref(null);
 const lastLight = ref(null);
 const lastNoise = ref(null);
+const lastTemperatureTime = ref(null);
+const lastLightTime = ref(null);
+const lastNoiseTime = ref(null);
 const ledStatus = ref(false);
 const showSetColorError = ref(false);
 const isListening = ref(false);
@@ -159,31 +189,35 @@ const command = ref("");
 
 const requestData = async () => {
   let data = await ApiService.getData("temperature");
-  if (data && data.status === "success") {
+  if (data && !data.error && data.type == "temperature") {
     lastTemperature.value = data.value;
+    lastTemperatureTime.value = new Date(data.time);
   } else {
     console.error("Error:", data.message);
   }
 
   data = await ApiService.getData("light");
-  if (data && data.status === "success") {
+  if (data && !data.error && data.type == "light") {
     lastLight.value = data.value;
+    lastLightTime.value = new Date(data.time);
   } else {
     console.error("Error:", data.message);
   }
 
   data = await ApiService.getData("noise");
-  if (data && data.status === "success") {
+  if (data && !data.error && data.type == "noise") {
     lastNoise.value = data.value;
+    lastNoiseTime.value = new Date(data.time);
   } else {
     console.error("Error:", data.message);
   }
 };
 
 const toggleLed = () => {
+  console.log("TRY TO SET LED: " + ledStatus.value ? "on" : "off");
   ApiService.toggleLed(ledStatus.value ? "on" : "off")
     .then((data) => {
-      if (!data || data.status !== "success") {
+      if (!data || data.error) {
         ledStatus.value = !ledStatus.value;
         if (data) console.error("Error:", data.message);
       }
@@ -195,11 +229,28 @@ const toggleLed = () => {
 
 const setColor = (r, g, b) => {
   ApiService.setLedColor(r, g, b).then((data) => {
-    if (!data || data.status !== "success") {
+    if (!data || data.error) {
       showSetColorError.value = true;
       if (data) console.error("Error:", data.message);
     }
   });
+};
+
+const getIp = () => {
+  return localStorage.getItem("ip");
+};
+
+const setIp = (ip) => {
+  ip = ip.trim();
+  const ipRegex =
+    /^(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)$/;
+  if (!ipRegex.test(ip)) {
+    alert("⚠️ Insert a valid IPv4 address!");
+    return false;
+  }
+  localStorage.setItem("ip", ip);
+  ApiService.setServerIP();
+  return true;
 };
 
 requestData();
@@ -252,7 +303,7 @@ onMounted(() => {
 
   setInterval(requestData, 5000);
   ApiService.getLedStatus().then((data) => {
-    if (!data || data.status != "success") {
+    if (!data || data.error) {
       return;
     }
 

@@ -1,6 +1,7 @@
 import { CapacitorHttp } from "@capacitor/core";
 
-const API_BASE_URL = "http://192.168.190.67:3000"; //IP ESP
+const storedIp = localStorage.getItem("ip");
+let API_BASE_URL = "http://" + storedIp || "http://10.254.254.109";
 
 const header = {
   url: API_BASE_URL,
@@ -10,10 +11,15 @@ const header = {
   },
 };
 
+const setServerIP = () => {
+  const storedIp = localStorage.getItem("ip");
+  API_BASE_URL = "http://" + storedIp || "http://10.254.254.109";
+};
+
 const getData = async (data) => {
   try {
     const options = header;
-    options.url = `${API_BASE_URL}/data/${data}`;
+    options.url = `${API_BASE_URL}/${data}`;
     const response = await CapacitorHttp.get(options);
     return response.data;
   } catch (error) {
@@ -71,6 +77,7 @@ const sendCommand = async (command) => {
   }
 };
 const ApiService = {
+  setServerIP,
   getData,
   toggleLed,
   setLedColor,
