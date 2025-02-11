@@ -43,7 +43,6 @@
 <script setup>
 import { IonRange, IonGrid, IonRow, IonCol, IonButton } from "@ionic/vue";
 import { ref, computed, onMounted } from "vue";
-import ApiService from "../api/request.js";
 
 const red = ref(0);
 const green = ref(0);
@@ -69,19 +68,9 @@ const emitColor = () => {
 };
 
 onMounted(() => {
-  // setTimeout(
-  //   ApiService.getLedStatus().then((data) => {
-  //     if (!data || data.error) {
-  //       return;
-  //     }
-  //     if (data.active) {
-  //       red.value = data.r;
-  //       green.value = data.g;
-  //       blue.value = data.b;
-  //     }
-  //   }),
-  //   2000
-  // );
+  red.value = 255;
+  green.value = 255;
+  blue.value = 255;
 });
 </script>
 <style scoped>

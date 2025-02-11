@@ -193,7 +193,7 @@ const requestData = async () => {
     lastTemperature.value = data.value;
     lastTemperatureTime.value = new Date(data.time);
   } else {
-    console.error("Error:", data.message);
+    console.error("Error receiving temperature");
   }
 
   data = await ApiService.getData("light");
@@ -201,7 +201,7 @@ const requestData = async () => {
     lastLight.value = data.value;
     lastLightTime.value = new Date(data.time);
   } else {
-    console.error("Error:", data.message);
+    console.error("Error receiving light");
   }
 
   data = await ApiService.getData("noise");
@@ -209,21 +209,23 @@ const requestData = async () => {
     lastNoise.value = data.value;
     lastNoiseTime.value = new Date(data.time);
   } else {
-    console.error("Error:", data.message);
+    console.error("Error receiving noise");
   }
+
+  setTimeout(requestData, 5000);
 };
 
 const toggleLed = () => {
-  console.log("TRY TO SET LED: " + ledStatus.value ? "on" : "off");
   ApiService.toggleLed(ledStatus.value ? "on" : "off")
     .then((data) => {
       if (!data || data.error) {
         ledStatus.value = !ledStatus.value;
-        if (data) console.error("Error:", data.message);
+        if (data) console.error("Error:", data.error);
       }
     })
     .catch((error) => {
       console.error("Error:", error);
+      ledStatus.value = !ledStatus.value;
     });
 };
 
@@ -231,7 +233,7 @@ const setColor = (r, g, b) => {
   ApiService.setLedColor(r, g, b).then((data) => {
     if (!data || data.error) {
       showSetColorError.value = true;
-      if (data) console.error("Error:", data.message);
+      if (data) console.error("Error:", data.error);
     }
   });
 };
@@ -301,17 +303,16 @@ onMounted(() => {
     };
   });
 
-  setInterval(requestData, 5000);
   ApiService.getLedStatus().then((data) => {
     if (!data || data.error) {
       return;
     }
-
     ledStatus.value = data.active;
   });
 });
 
 onUnmounted(() => {
+  requestData();
   VoskPlugin.removeAllListeners();
 });
 </script>
