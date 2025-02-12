@@ -93,8 +93,7 @@ Installation procedure
 
 Now, for running the server, you have to (*optional*: train your model with ```rasa train``` and) go in rasa-core folder with
 ```bash
-cd rasa-server
-rasa-venv\Scripts\activate
+cd rasa-core
 ```
 and run the following commands in two separate terminals:
 - ```rasa run``` for run the model
