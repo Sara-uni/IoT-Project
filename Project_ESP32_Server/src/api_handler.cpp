@@ -36,7 +36,7 @@ String getFormattedTimestamp()
 }
 
 // give the right JSON format to the data we acquired
-String processData(String data)
+String processData(String data, bool vocalRequest)
 {
     int firstComma = data.indexOf(',');
     if (firstComma == -1)
@@ -52,6 +52,7 @@ String processData(String data)
     jsonDoc["type"] = type;
     jsonDoc["value"] = value;
     jsonDoc["time"] = getFormattedTimestamp();
+    jsonDoc["vocalRequest"] = vocalRequest;
 
     String formattedData = "";
     serializeJson(jsonDoc, formattedData);
@@ -96,7 +97,7 @@ String processLed(String data)
     return formattedData;
 }
 
-void temperatureHandler(AsyncWebServerRequest *request)
+void temperatureHandler(AsyncWebServerRequest *request, bool vocalRequest = false)
 {
     Serial2.println("GET_TEMP");
     Serial.println("Sent command: GET_TEMP to MSP432");
@@ -110,10 +111,10 @@ void temperatureHandler(AsyncWebServerRequest *request)
     }
 
     String receivedData = Serial2.readStringUntil('\n');
-    request->send(200, "application/json", processData(receivedData));
+    request->send(200, "application/json", processData(receivedData, vocalRequest));
 }
 
-void noiseHandler(AsyncWebServerRequest *request)
+void noiseHandler(AsyncWebServerRequest *request, bool vocalRequest = false)
 {
     Serial2.println("GET_NOISE");
     Serial.println("Sent command: GET_NOISE to MSP432");
@@ -127,10 +128,10 @@ void noiseHandler(AsyncWebServerRequest *request)
     }
 
     String receivedData = Serial2.readStringUntil('\n');
-    request->send(200, "application/json", processData(receivedData));
+    request->send(200, "application/json", processData(receivedData, vocalRequest));
 }
 
-void lightHandler(AsyncWebServerRequest *request)
+void lightHandler(AsyncWebServerRequest *request, bool vocalRequest = false)
 {
     Serial2.println("GET_LIGHT");
     Serial.println("Sent command: GET_LIGHT to MSP432");
@@ -144,7 +145,7 @@ void lightHandler(AsyncWebServerRequest *request)
     }
 
     String receivedData = Serial2.readStringUntil('\n');
-    request->send(200, "application/json", processData(receivedData));
+    request->send(200, "application/json", processData(receivedData, vocalRequest));
 }
 
 void ledOnHandler(AsyncWebServerRequest *request)
@@ -251,6 +252,20 @@ void getLedStatusHandler(AsyncWebServerRequest *request)
     request->send(200, "application/json", processLed(receivedData));
 }
 
+char *getRasaResponse(String rawResponse)
+{
+    JsonDocument doc;
+    DeserializationError error = deserializeJson(doc, rawResponse);
+
+    if (error)
+    {
+        Serial.print("Errore nella deserializzazione del JSON: ");
+        Serial.println(error.f_str());
+        return "";
+    }
+    return doc[0]["text"];
+}
+
 void voiceCommandHandler(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
 {
     String receivedPayload = String((char *)data).substring(0, len);
@@ -271,29 +286,41 @@ void voiceCommandHandler(AsyncWebServerRequest *request, uint8_t *data, size_t l
     if (httpResponseCode > 0)
     {
         String response = http.getString();
-        Serial.println("Rasa response: " + response);
+        char *command = getRasaResponse(response);
+        if (strcmp(command, "GET_TEMP") == 0)
+        {
+            temperatureHandler(request, true);
+        }
+        if (strcmp(command, "GET_LIGHT") == 0)
+        {
+            lightHandler(request, true);
+        }
+        if (strcmp(command, "GET_NOISE") == 0)
+        {
+            noiseHandler(request, true);
+        }
+        if (strcmp(command, "LED_ON") == 0)
+        {
+            ledOnHandler(request);
+        }
+        if (strcmp(command, "LED_OFF") == 0)
+        {
+            ledOffHandler(request);
+        }
+        if (strcmp(command, "SET_COLOR") == 0)
+        {
+            setColorHandler(request);
+        }
+        else
+        {
+            request->send(400, "application/json", "{\"error\":\"Command could not be interpreted.\"}");
+        }
     }
     else
     {
         Serial.println("Error in HTTP request");
+        request->send(400, "application/json", "{\"error\":\"Error in HTTP request\"}");
     }
 
     http.end();
-
-    Serial.println("Sent command: " + receivedPayload);
-
-    // Attendi una conferma dalla UART
-    bool responseOk = waitResponse();
-    if (!responseOk)
-    {
-        Serial.println("Error: timeout by MSP432 response.");
-        request->send(500, "application/json", "{\"error\":\"Timeout MSP432\"}");
-        return;
-    }
-
-    // Ricevi la risposta dall'MSP432
-    String mspResponse = Serial2.readStringUntil('\n');
-    Serial.println("MSP432 response: " + mspResponse);
-
-    request->send(200, "application/json", "{\"status\":\"success\",\"response\":\"" + mspResponse + "\"}");
 }

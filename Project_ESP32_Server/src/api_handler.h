@@ -4,9 +4,9 @@
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 
-void temperatureHandler(AsyncWebServerRequest *request);
-void noiseHandler(AsyncWebServerRequest *request);
-void lightHandler(AsyncWebServerRequest *request);
+void temperatureHandler(AsyncWebServerRequest *request, bool vocalRequest = false);
+void noiseHandler(AsyncWebServerRequest *request, bool vocalRequest = false);
+void lightHandler(AsyncWebServerRequest *request, bool vocalRequest = false);
 void ledOnHandler(AsyncWebServerRequest *request);
 void ledOffHandler(AsyncWebServerRequest *request);
 void setColorHandler(AsyncWebServerRequest *request);
