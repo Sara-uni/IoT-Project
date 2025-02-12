@@ -1,6 +1,7 @@
 #include <WiFi.h>
 #include <ESPAsyncWebServer.h>
 #include <ArduinoJson.h>
+#include <esp_task_wdt.h>
 
 // UART pins on the ESP32
 #define RX 16
@@ -9,8 +10,8 @@
 AsyncWebServer server(80);
 
 // parameters for a existing wifi network (required to get the timestamp)
-const char *ssidWifi = "WRL#12IRIDEOS";
-const char *pswWifi = "Matty!!2003";
+const char *ssidWifi = "OnePlus Nord";
+const char *pswWifi = "androids";
 const char *ntpServer = "pool.ntp.org";
 const long gmtOffset_sec = 0;
 const int daylightOffset_sec = 0;
@@ -51,7 +52,7 @@ void processData(String data)
   String type = data.substring(0, firstComma);
   String value = data.substring(firstComma + 1);
 
-  StaticJsonDocument<200> jsonDoc;
+  JsonDocument jsonDoc;
   jsonDoc["type"] = type;
   jsonDoc["value"] = value;
   jsonDoc["time"] = getFormattedTimestamp();
@@ -73,7 +74,7 @@ void processLed(String data)
   String active = data.substring(0, firstComma);
   String colors = data.substring(firstComma + 1);
 
-  StaticJsonDocument<200> jsonDoc;
+  JsonDocument jsonDoc;
   jsonDoc["active"] = active;
 
   if (active == "true")
@@ -98,24 +99,63 @@ void processLed(String data)
   serializeJson(jsonDoc, latestData);
 }
 
-void tempSetup()
+bool waitResponse(int timeoutMs = 5000)
 {
-  // existing wifi configuration
+  unsigned long timeout = millis() + timeoutMs; // Timeout di 1 secondo
+  while (!Serial2.available())
+  {
+    if (millis() > timeout)
+    {
+      return false;
+    }
+    yield();
+  }
+  return true;
+}
+
+void serverSetup()
+{
+  Serial.println("Connecting to WiFi...");
   WiFi.begin(ssidWifi, pswWifi);
+
+  int attempts = 0;
   while (WiFi.status() != WL_CONNECTED)
   {
-    delay(500);
+    unsigned long timeout = millis() + 500;
+    while (millis() < timeout)
+    {
+      yield();
+    }
+
     Serial.print(".");
+    attempts++;
+    if (attempts > 30)
+    { // Timeout dopo 15 secondi
+      Serial.println("\nFailed to connect to WiFi! Restarting...");
+      ESP.restart();
+    }
   }
-  Serial.println(" Connected!");
+
+  Serial.println("\nWiFi Connected!");
+  Serial.print("IP Address: ");
+  Serial.println(WiFi.localIP());
+
   configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
 
-  // access point configuration
-  WiFi.softAP(ssid, password);
-  Serial.println("Access Point ready");
-  Serial.println(WiFi.softAPIP());
+  // Configurazione Access Point
+  Serial.println("Starting Access Point...");
+  bool apStarted = WiFi.softAP(ssid, password);
+  if (apStarted)
+  {
+    Serial.println("AP Started! IP Address: ");
+    Serial.println(WiFi.softAPIP());
+  }
+  else
+  {
+    Serial.println("Failed to start AP!");
+  }
 
-  // javascript to update the data every second
+  // API
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
             {
     String html = "<html><body>";
@@ -124,141 +164,194 @@ void tempSetup()
     request->send(200, "text/html", html); });
 
   server.on("/temperature", HTTP_GET, [](AsyncWebServerRequest *request)
-            {  
-              Serial2.println("GET_TEMP");
-              unsigned long timeout = millis() + 1000; // Timeout di 1 secondo
-              while (!Serial2.available()) {
-                  if (millis() > timeout) {
-                      request->send(500, "application/json", "{\"error\":\"Timeout MSP432\"}");
-                      return;
-                  }
-              }
-              String receivedData = Serial2.readStringUntil('\n');
-              processData(receivedData);
-              request->send(200, "application/json", latestData); });
+            {
+    Serial2.println("GET_TEMP");
+    Serial.println("Sent command: GET_TEMP to MSP432");
+
+    bool getResponse = waitResponse();
+    if(!getResponse) {
+      Serial.println("Error: Timeout waiting for response from MSP432.");
+      request->send(500, "application/json", "{\"error\":\"Timeout MSP432\"}");
+      return;
+    }
+    
+    String receivedData = Serial2.readStringUntil('\n');
+    processData(receivedData);
+    request->send(200, "application/json", latestData); });
 
   server.on("/noise", HTTP_GET, [](AsyncWebServerRequest *request)
-            { Serial2.println("GET_NOISE");
-              unsigned long timeout = millis() + 1000; // Timeout di 1 secondo
-              while (!Serial2.available()) {
-                  if (millis() > timeout) {
-                      request->send(500, "application/json", "{\"error\":\"Timeout MSP432\"}");
-                      return;
-                  }
-              }
-              String receivedData = Serial2.readStringUntil('\n');
-              processData(receivedData);
-              request->send(200, "application/json", latestData); });
+            { 
+    Serial2.println("GET_NOISE");
+    Serial.println("Sent command: GET_NOISE to MSP432");
 
+    bool getResponse = waitResponse();
+    if(!getResponse) {
+      Serial.println("Error: Timeout waiting for response from MSP432.");
+      request->send(500, "application/json", "{\"error\":\"Timeout MSP432\"}");
+      return;
+    }
+    
+    String receivedData = Serial2.readStringUntil('\n');
+    processData(receivedData);
+    request->send(200, "application/json", latestData); });
   server.on("/light", HTTP_GET, [](AsyncWebServerRequest *request)
-            { Serial2.println("GET_LIGHT");
-              unsigned long timeout = millis() + 1000; // Timeout di 1 secondo
-              while (!Serial2.available()) {
-                  if (millis() > timeout) {
-                      request->send(500, "application/json", "{\"error\":\"Timeout MSP432\"}");
-                      return;
-                  }
-              }
-              String receivedData = Serial2.readStringUntil('\n');
-              processData(receivedData);
-              request->send(200, "application/json", latestData); });
+            { 
+    Serial2.println("GET_LIGHT");
+    Serial.println("Sent command: GET_LIGHT to MSP432");
+    
+    bool getResponse = waitResponse();
+    if(!getResponse) {
+      Serial.println("Error: Timeout waiting for response from MSP432.");
+      request->send(500, "application/json", "{\"error\":\"Timeout MSP432\"}");
+      return;
+    }
+    
+    String receivedData = Serial2.readStringUntil('\n');
+    processData(receivedData);
+    Serial.print("Received from MSP432: ");
+    Serial.println(receivedData);
+    request->send(200, "application/json", latestData); });
 
   server.on("/led/on", HTTP_GET, [](AsyncWebServerRequest *request)
-            { Serial2.println("LED_ON");
-              unsigned long timeout = millis() + 1000; // Timeout di 1 secondo
-              while (!Serial2.available()) {
-                  if (millis() > timeout) {
-                      request->send(500, "application/json", "{\"error\":\"Timeout MSP432\"}");
-                      return;
-                  }
+            { 
+              Serial2.println("LED_ON");
+              Serial.println("Sent command: LED_ON to MSP432");
+
+              bool getResponse = waitResponse();
+              if(!getResponse) {
+                Serial.println("Error: Timeout waiting for response from MSP432.");
+                request->send(500, "application/json", "{\"error\":\"Timeout MSP432\"}");
+                return;
               }
+              
               request->send(200, "application/json", "{\"success\":\"The led is on!\"}"); });
 
   server.on("/led/off", HTTP_GET, [](AsyncWebServerRequest *request)
-            { Serial2.println("LED_OFF");
-              unsigned long timeout = millis() + 1000; // Timeout di 1 secondo
-              while (!Serial2.available()) {
-                  if (millis() > timeout) {
-                      request->send(500, "application/json", "{\"error\":\"Timeout MSP432\"}");
-                      return;
-                  }
+            { 
+              Serial2.println("LED_OFF");
+              Serial.println("Sent command: LED_OFF to MSP432");
+
+              bool getResponse = waitResponse();
+              if(!getResponse) {
+                Serial.println("Error: Timeout waiting for response from MSP432.");
+                request->send(500, "application/json", "{\"error\":\"Timeout MSP432\"}");
+                return;
               }
+              
               request->send(200, "application/json", "{\"success\":\"The led is off!\"}"); });
 
   server.on("/led-color", HTTP_GET, [](AsyncWebServerRequest *request)
             {
-                String red = "0";
-                String green = "0";
-                String blue = "0";
-            
-                if (request->hasParam("r")) {
-                  red = request->getParam("r")->value();
-                  if (red.toInt() < 0 || red.toInt() > 255) {
-                    request->send(400, "application/json", "{\"error\":\"Invalid red value\"}");
-                    return;
-                  }
-                }
-              
-                if (request->hasParam("g")) {
-                  green = request->getParam("g")->value();
-                  if (green.toInt() < 0 || green.toInt() > 255) {
-                    request->send(400, "application/json", "{\"error\":\"Invalid green value\"}");
-                    return;
-                  }
-                }
+    String red = "0";
+    String green = "0";
+    String blue = "0";
+
+    if (request->hasParam("r")) {
+      red = request->getParam("r")->value();
+      if (red.toInt() < 0 || red.toInt() > 255) {
+        request->send(400, "application/json", "{\"error\":\"Invalid red value\"}");
+        return;
+      }
+    }
+
+    if (request->hasParam("g")) {
+      green = request->getParam("g")->value();
+      if (green.toInt() < 0 || green.toInt() > 255) {
+        request->send(400, "application/json", "{\"error\":\"Invalid green value\"}");
+        return;
+      }
+    }
+
+    if (request->hasParam("b")) {
+        blue = request->getParam("b")->value();
+        if (blue.toInt() < 0 || blue.toInt() > 255) {
+            request->send(400, "application/json", "{\"error\":\"Invalid blue value\"}");
+            return;
+        }
+    }
+
+    char command[50];
+    snprintf(command, sizeof(command), "SET_COLOR(%s, %s, %s)", red.c_str(), green.c_str(), blue.c_str());
+    Serial2.println(command);
+
+    char string[256];
+    sprintf(string, "Sent command: %s", command);
+    Serial.println(command);
                   
-                if (request->hasParam("b")) {
-                    blue = request->getParam("b")->value();
-                    if (blue.toInt() < 0 || blue.toInt() > 255) {
-                        request->send(400, "application/json", "{\"error\":\"Invalid blue value\"}");
-                        return;
-                    }
-                }
-                
-                char command[50];
-                snprintf(command, sizeof(command), "SET_COLOR(%s, %s, %s)", red.c_str(), green.c_str(), blue.c_str());
-                Serial2.println(command);
-                unsigned long timeout = millis() + 1000; // Timeout di 1 secondo
-                while (!Serial2.available()) {
-                    if (millis() > timeout) {
-                        request->send(500, "application/json", "{\"error\":\"Timeout MSP432\"}");
-                        return;
-                    }
-                }
-                request->send(200, "application/json", "{\"success\":\"Changed color!\"}"); });
+    bool getResponse = waitResponse();
+    if(!getResponse) {
+      Serial.println("Error: Timeout waiting for response from MSP432.");
+      request->send(500, "application/json", "{\"error\":\"Timeout MSP432\"}");
+      return;
+    }
+    
+    request->send(200, "application/json", "{\"success\":\"Changed color!\"}"); });
 
   server.on("/led-status", HTTP_GET, [](AsyncWebServerRequest *request)
-            { Serial2.println("GET_LED");
-              unsigned long timeout = millis() + 1000; // Timeout di 1 secondo
-              while (!Serial2.available()) {
-                  if (millis() > timeout) {
-                      request->send(500, "application/json", "{\"error\":\"Timeout MSP432\"}");
-                      return;
-                  }
-              }
-              String receivedData = Serial2.readStringUntil('\n');
-              processLed(receivedData);
-              request->send(200, "application/json", latestData); });
+            {
+    Serial2.println("GET_LED");
+    Serial.println("Sent command: GET_LED to MSP432");
+     
+    bool getResponse = waitResponse();
+    if(!getResponse) {
+      Serial.println("Error: Timeout waiting for response from MSP432.");
+      request->send(500, "application/json", "{\"error\":\"Timeout MSP432\"}");
+      return;
+    }
+    
+    String receivedData = Serial2.readStringUntil('\n');
+    processLed(receivedData);
+    request->send(200, "application/json", latestData); });
 
+  // Avvio del server
+  Serial.println("Starting Web Server...");
   server.begin();
+  Serial.println("Web Server started!");
 }
 
 void setup()
 {
   Serial.begin(115200);
   Serial2.begin(115200, SERIAL_8N1, RX, TX);
-  tempSetup();
+  serverSetup();
 }
-
 void loop()
 {
-  if (Serial2.available())
+  esp_task_wdt_reset();
+  yield();
+  static unsigned long lastCheckTime = 0;
+  // Controllo WiFi ogni 5 secondi
+  if (millis() - lastCheckTime > 5000)
   {
+    lastCheckTime = millis();
 
-    String receivedData = Serial2.readStringUntil('\n');
+    if (WiFi.status() != WL_CONNECTED)
+    {
+      Serial.println("WiFi DISCONNECTED! Trying to reconnect...");
+      WiFi.disconnect();
+      WiFi.reconnect();
 
-    receivedData.trim();
-    Serial.println("received: " + receivedData); // you can check the arriving data by monitoring the port
-    processData(receivedData);
+      unsigned long reconnectTimeout = millis() + 50000; // Timeout di 10 secondi
+      while (WiFi.status() != WL_CONNECTED && millis() < reconnectTimeout)
+      {
+        unsigned long timeout = millis() + 500;
+        while (millis() < timeout)
+        {
+          yield();
+        }
+        Serial.print(".");
+      }
+
+      if (WiFi.status() == WL_CONNECTED)
+      {
+        Serial.println("\nWiFi RECONNECTED!");
+        Serial.print("New IP: ");
+        Serial.println(WiFi.localIP());
+      }
+      else
+      {
+        Serial.println("\nFailed to reconnect.");
+      }
+    }
   }
 }
