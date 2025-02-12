@@ -80,10 +80,10 @@ Installation procedure
       python -m venv rasa-venv
       ```
    - for Windows:
-   ```bash
-   cd rasa-server
-   rasa-venv\Scripts\activate
-   ```
+      ```bash
+      cd rasa-server
+      rasa-venv\Scripts\activate
+      ```
 
 - run the following commands to enter the virtual environment and install rasa with the necessary dependecies
 ```bash
