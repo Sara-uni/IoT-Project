@@ -99,9 +99,9 @@ void processLed(String data)
   serializeJson(jsonDoc, latestData);
 }
 
-bool waitResponse(int timeoutMs = 5000)
+bool waitResponse(int timeoutMs = 1000)
 {
-  unsigned long timeout = millis() + timeoutMs; // Timeout di 1 secondo
+  unsigned long timeout = millis() + timeoutMs;
   while (!Serial2.available())
   {
     if (millis() > timeout)
@@ -270,7 +270,7 @@ void serverSetup()
         }
     }
 
-    char command[50];
+    char command[30];
     snprintf(command, sizeof(command), "SET_COLOR(%s, %s, %s)", red.c_str(), green.c_str(), blue.c_str());
     Serial2.println(command);
 
