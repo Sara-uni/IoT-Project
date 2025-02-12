@@ -74,17 +74,16 @@ To install the necessary dependency and run the rasa server used to respond to t
 
 Installation procedure
 - move in the "rasa-server" folder and create the virtual environment
-
-- **For Linux**:
-```bash
-cd rasa-server
-python -m venv rasa-venv
-```
-- **For Windows**:
-```bash
-cd rasa-server
-rasa-venv\Scripts\activate
-```
+   - for Linux:
+      ```bash
+      cd rasa-server
+      python -m venv rasa-venv
+      ```
+   - for Windows:
+   ```bash
+   cd rasa-server
+   rasa-venv\Scripts\activate
+   ```
 
 - run the following commands to enter the virtual environment and install rasa with the necessary dependecies
 ```bash
