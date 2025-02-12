@@ -264,9 +264,9 @@ void voiceCommandHandler(AsyncWebServerRequest *request, uint8_t *data, size_t l
     http.begin("http://" + String(rasaIP) + ":5005/webhooks/rest/webhook");
     http.addHeader("Content-Type", "application/json");
 
-    // char jsonPayload[256];
-    // sprintf(jsonPayload, "{\"sender\": \"esp32\", \"message\": %s }", receivedPayload);
-    int httpResponseCode = http.POST(receivedPayload);
+    char jsonPayload[256];
+    sprintf(jsonPayload, "{\"sender\": \"esp32\", \"message\": %s }", receivedPayload);
+    int httpResponseCode = http.POST(jsonPayload);
 
     if (httpResponseCode > 0)
     {

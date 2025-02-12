@@ -4,9 +4,6 @@
 # See this guide on how to implement these action:
 # https://rasa.com/docs/rasa/custom-actions
 
-
-# This is a simple example for a custom action which utters "Hello World!"
-
 from typing import Any, Text, Dict, List
 
 from rasa_sdk import Action, Tracker
@@ -22,7 +19,7 @@ class ActionSendTemperature(Action):
             tracker: Tracker,
             domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
 
-        dispatcher.utter_message(text="Ecco la temperatura!")
+        dispatcher.utter_message(text="GET_TEMP")
 
         return []
 
@@ -36,7 +33,7 @@ class ActionSendLight(Action):
             tracker: Tracker,
             domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
 
-        dispatcher.utter_message(text="Ecco la luce!")
+        dispatcher.utter_message(text="GET_LIGHT")
 
         return []
 
@@ -50,7 +47,7 @@ class ActionSendNoise(Action):
             tracker: Tracker,
             domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
 
-        dispatcher.utter_message(text="Ecco il rumore!")
+        dispatcher.utter_message(text="GET_NOISE")
 
         return []
 
@@ -64,7 +61,7 @@ class ActionSendRepeat(Action):
             tracker: Tracker,
             domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
 
-        dispatcher.utter_message(text="Non ho capito, puoi ripetere?")
+        dispatcher.utter_message(text="NOTHING")
 
         return []
 
@@ -76,7 +73,7 @@ class ActionTurnOnLed(Action):
     def run(self, dispatcher: CollectingDispatcher,
             tracker: Tracker,
             domain: Dict[Text, Any]) -> List:
-        dispatcher.utter_message(text="Sto accendendo il LED.")
+        dispatcher.utter_message(text="LED_ON")
         return []
 
 
@@ -87,7 +84,7 @@ class ActionTurnOffLed(Action):
     def run(self, dispatcher: CollectingDispatcher,
             tracker: Tracker,
             domain: Dict[Text, Any]) -> List:
-        dispatcher.utter_message(text="Sto spegnendo il LED.")
+        dispatcher.utter_message(text="LED_OFF")
         return []
 
 
@@ -112,10 +109,9 @@ class ActionChangeLedColor(Action):
         # Controlla se il colore esiste
         if color and color in color_map:
             led_color = color_map[color]  # Ottieni i valori RGB del colore
-            # Aggiungi qui la logica per cambiare effettivamente il colore del LED
-            dispatcher.utter_message(text=f"Sto cambiando il colore del LED a {color}.")
+            dispatcher.utter_message(text=f"SET_COLOR({led_color[0]}, {led_color[1]}, {led_color[2]})")
         else:
-            dispatcher.utter_message(text="Non ho capito quale colore impostare o non è un colore valido. Puoi ripetere?")
+            dispatcher.utter_message(text="NOTHING")
 
         return []
 
@@ -128,4 +124,9 @@ color_map = {
     "purple":   [255, 0, 255],
     "cyan":     [0, 255, 255],
     "white":    [255, 255, 255],
+    "black":    [0, 0, 0],
+    "orange":   [255, 165, 0],
+    "pink":     [255, 192, 203],
+    "brown":    [139, 69, 19],
+    "gray":     [128, 128, 128]
 }
