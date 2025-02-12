@@ -74,17 +74,29 @@ To install the necessary dependency and run the rasa server used to respond to t
 
 Installation procedure
 - move in the "rasa-server" folder and create the virtual environment
+For Linux:
 ```bash
 cd rasa-server
 python -m venv rasa-venv
 ```
+For Windows:
+```bash
+cd rasa-server
+rasa-venv\Scripts\activate
+```
+
 - run the following commands to enter the virtual environment and install rasa with the necessary dependecies
 ```bash
 source rasa-venv/bin/activate
 pip install rasa
 ```
 
-Now, for running the server, you have to (*optional*: train your model with ```rasa train``` and) run the following commands in two separate terminals:
+Now, for running the server, you have to (*optional*: train your model with ```rasa train``` and) go in rasa-core folder with
+```bash
+cd rasa-server
+rasa-venv\Scripts\activate
+```
+and run the following commands in two separate terminals:
 - ```rasa run``` for run the model
 - ```rasa run actions``` for the responses to the user commands
 
