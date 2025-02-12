@@ -1,2 +1,3 @@
 rasa-server/rasa-venv
 rasa-server/rasa-core/.rasa/cache
+rasa-server/rasa-core/actions/__pycache__
