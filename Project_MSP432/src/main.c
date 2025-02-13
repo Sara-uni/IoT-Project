@@ -74,50 +74,48 @@ void sendLight()
     UART_sendString(uartBuffer);
 }
 
+void turnLed(uint8_t pin, bool mode) {
+    if (pin == BIT0) {
+        red_led = mode;
+    } else if (pin == BIT1) {
+        green_led = mode;
+    } else if (pin == BIT2) {
+        blue_led = mode;
+    }
+    if (mode) {
+        P2OUT |= pin;
+    } else {
+        P2OUT &= ~pin;
+    }
+}
+
 void setColor(char *color)
 {
-    int r, g, b;
-    sscanf(color, "%d,%d,%d", &r, &g, &b);
-    // setLEDColor(r, g, b);
-}
+    int r = 0, g = 0, b = 0;
+    sscanf(color, "%d, %d, %d", &r, &g, &b);  // Estrae i valori di r, g, b dalla stringa
 
-void turnRed(bool mode)
-{
-    red_led = mode;
-    if (mode)
-    {
-        P2OUT |= BIT0;
-    }
-    else
-    {
-        P2OUT &= ~BIT0;
-    }
-}
+    // Configura i pin P2.0 (rosso), P2.1 (verde), P2.2 (blu) come uscite PWM
+    P2->DIR |= (BIT0 | BIT1 | BIT2);      // Imposta i pin come output
+    P2->SEL0 |= (BIT0 | BIT1 | BIT2);     // Seleziona la funzione PWM
+    P2->SEL1 &= ~(BIT0 | BIT1 | BIT2);    // Assicura che sia selezionata la funzione alternativa 1 (PWM)
 
-void turnGreen(bool mode)
-{
-    green_led = mode;
-    if (mode)
-    {
-        P2OUT |= BIT1;
-    }
-    else
-    {
-        P2OUT &= ~BIT1;
-    }
-}
+    // Configura Timer_A0 per controllare i tre LED
+    TIMER_A0->CCR[0] = 1000 - 1;          // Imposta il periodo del PWM (1000 cicli)
 
-void turnBlue(bool mode)
-{
-    blue_led = mode;
-    if (mode)
-    {
-        P2OUT |= BIT2;
-    }
-    else
-    {
-        P2OUT &= ~BIT2;
-    }
+    // Configura PWM per il LED rosso su CCR1
+    TIMER_A0->CCTL[1] = TIMER_A_CCTLN_OUTMOD_7; // PWM reset/set
+    TIMER_A0->CCR[1] = (int)(r * 3.92);   // Imposta il duty cycle per il rosso (0-100%)
+
+    // Configura PWM per il LED verde su CCR2
+    TIMER_A0->CCTL[2] = TIMER_A_CCTLN_OUTMOD_7; // PWM reset/set
+    TIMER_A0->CCR[2] = (int)(g * 3.92);   // Imposta il duty cycle per il verde (0-100%)
+
+    // Configura PWM per il LED blu su CCR3
+    TIMER_A0->CCTL[3] = TIMER_A_CCTLN_OUTMOD_7; // PWM reset/set
+    TIMER_A0->CCR[3] = (int)(b * 3.92);   // Imposta il duty cycle per il blu (0-100%)
+
+    // Avvia Timer_A in modalità up
+    TIMER_A0->CTL = TIMER_A_CTL_TASSEL_2 | TIMER_A_CTL_MC_1;  // Usa SMCLK, modalità up
 }
 
 int main(void)
@@ -146,30 +144,32 @@ int main(void)
             }
             if (strcmp(command, "LED_ON") == 0)
             {
-                UART_sendString("OK");
-                turnRed(true);
-                turnGreen(true);
-                turnBlue(true);
+                UART_sendString("OK\n");
+                turnLed(BIT0, true);
+                turnLed(BIT1, true);
+                turnLed(BIT2, true);
             }
             if (strcmp(command, "LED_OFF") == 0)
             {
-                UART_sendString("OK");
-                turnRed(false);
-                turnGreen(false);
-                turnBlue(false);
+                UART_sendString("OK\n");
+                turnLed(BIT0, false);
+                turnLed(BIT1, false);
+                turnLed(BIT2, false);
             }
             if (strcmp(command, "SET_COLOR") == 0)
             {
                 char colorCommand[20];
                 UART_receiveString(colorCommand, sizeof(colorCommand));
-                setColor(colorCommand);
+                // setColor(colorCommand);
+                turnLed(BIT0, true);
+                UART_sendString("OK\n");
             }
             if (strcmp(command, "GET_LED") == 0)
             {
                 char response[40];
                 if (red_led || green_led || blue_led)
                 {
-                    sprintf(response, "true,255,255,255");
+                    sprintf(response, "true");
                 }
                 else
                 {
