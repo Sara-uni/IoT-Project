@@ -10,8 +10,8 @@
 AsyncWebServer server(80);
 
 // parameters for a existing wifi network (required to get the timestamp)
-const char *ssidWifi = "OnePlus Nord";
-const char *pswWifi = "androids";
+const char *ssidWifi = "WRL#12IRIDEOS";
+const char *pswWifi = "Matty!!2003";
 const char *ntpServer = "pool.ntp.org";
 const long gmtOffset_sec = 0;
 const int daylightOffset_sec = 0;

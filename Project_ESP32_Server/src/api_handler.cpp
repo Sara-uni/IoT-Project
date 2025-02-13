@@ -4,7 +4,8 @@
 #include "api_handler.h"
 
 // ip server rasa
-const char *rasaIP = "192.168.4.2";
+const char *rasaIp = "10.254.254.129";
+// const char *rasaIp = "192.168.4.2";
 
 bool waitResponse(int timeoutMs = 1000)
 {
@@ -38,6 +39,8 @@ String getFormattedTimestamp()
 // give the right JSON format to the data we acquired
 String processData(String data, bool vocalRequest)
 {
+    Serial.print("Data to process: ");
+    Serial.println(data);
     int firstComma = data.indexOf(',');
     if (firstComma == -1)
     {
@@ -100,7 +103,7 @@ String processLed(String data)
 void temperatureHandler(AsyncWebServerRequest *request, bool vocalRequest)
 {
     Serial2.println("GET_TEMP");
-    Serial.println("Sent command: GET_TEMP to MSP432");
+    Serial.println("\nSent command: GET_TEMP to MSP432");
 
     bool getResponse = waitResponse();
     if (!getResponse)
@@ -117,7 +120,7 @@ void temperatureHandler(AsyncWebServerRequest *request, bool vocalRequest)
 void noiseHandler(AsyncWebServerRequest *request, bool vocalRequest)
 {
     Serial2.println("GET_NOISE");
-    Serial.println("Sent command: GET_NOISE to MSP432");
+    Serial.println("\nSent command: GET_NOISE to MSP432");
 
     bool getResponse = waitResponse();
     if (!getResponse)
@@ -134,7 +137,7 @@ void noiseHandler(AsyncWebServerRequest *request, bool vocalRequest)
 void lightHandler(AsyncWebServerRequest *request, bool vocalRequest)
 {
     Serial2.println("GET_LIGHT");
-    Serial.println("Sent command: GET_LIGHT to MSP432");
+    Serial.println("\nSent command: GET_LIGHT to MSP432");
 
     bool getResponse = waitResponse();
     if (!getResponse)
@@ -151,7 +154,7 @@ void lightHandler(AsyncWebServerRequest *request, bool vocalRequest)
 void ledOnHandler(AsyncWebServerRequest *request)
 {
     Serial2.println("LED_ON");
-    Serial.println("Sent command: LED_ON to MSP432");
+    Serial.println("\nSent command: LED_ON to MSP432");
 
     bool getResponse = waitResponse();
     if (!getResponse)
@@ -167,7 +170,7 @@ void ledOnHandler(AsyncWebServerRequest *request)
 void ledOffHandler(AsyncWebServerRequest *request)
 {
     Serial2.println("LED_OFF");
-    Serial.println("Sent command: LED_OFF to MSP432");
+    Serial.println("\nSent command: LED_OFF to MSP432");
 
     bool getResponse = waitResponse();
     if (!getResponse)
@@ -221,7 +224,7 @@ void setColorHandler(AsyncWebServerRequest *request)
     Serial2.println(command);
 
     char string[256];
-    sprintf(string, "Sent command: %s", command);
+    sprintf(string, "\nSent command: %s", command);
     Serial.println(command);
 
     bool getResponse = waitResponse();
@@ -238,7 +241,7 @@ void setColorHandler(AsyncWebServerRequest *request)
 void getLedStatusHandler(AsyncWebServerRequest *request)
 {
     Serial2.println("GET_LED");
-    Serial.println("Sent command: GET_LED to MSP432");
+    Serial.println("\nSent command: GET_LED to MSP432");
 
     bool getResponse = waitResponse();
     if (!getResponse)
@@ -252,8 +255,10 @@ void getLedStatusHandler(AsyncWebServerRequest *request)
     request->send(200, "application/json", processLed(receivedData));
 }
 
-const char *getRasaResponse(String rawResponse)
+String getRasaResponse(String rawResponse)
 {
+    Serial.print("raw: ");
+    Serial.println(rawResponse);
     JsonDocument doc;
     DeserializationError error = deserializeJson(doc, rawResponse);
 
@@ -263,7 +268,8 @@ const char *getRasaResponse(String rawResponse)
         Serial.println(error.f_str());
         return "";
     }
-    return doc[0]["text"];
+
+    return String(doc[0]["text"].as<const char *>());
 }
 
 void voiceCommandHandler(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
@@ -271,43 +277,42 @@ void voiceCommandHandler(AsyncWebServerRequest *request, uint8_t *data, size_t l
     String receivedPayload = String((char *)data).substring(0, len);
     Serial.println("Received JSON: " + receivedPayload);
 
-    // Invia il payload all'MSP432 tramite UART
-    Serial2.println(receivedPayload);
-
     // send command to rasa server
     HTTPClient http;
-    http.begin("http://" + String(rasaIP) + ":5005/webhooks/rest/webhook");
+    http.begin("http://" + String(rasaIp) + ":5005/webhooks/rest/webhook");
     http.addHeader("Content-Type", "application/json");
 
-    char jsonPayload[256];
-    sprintf(jsonPayload, "{\"sender\": \"esp32\", \"message\": %s }", receivedPayload);
+    char jsonPayload[516];
+    sprintf(jsonPayload, "{\"sender\": \"esp32\", \"message\": \"%s\" }", receivedPayload.c_str());
+    Serial.println(jsonPayload);
     int httpResponseCode = http.POST(jsonPayload);
 
     if (httpResponseCode > 0)
     {
         String response = http.getString();
-        const char *command = getRasaResponse(response);
-        if (strcmp(command, "GET_TEMP") == 0)
+        String command = getRasaResponse(response);
+        Serial.println(command);
+        if (command == "GET_TEMP")
         {
             temperatureHandler(request, true);
         }
-        if (strcmp(command, "GET_LIGHT") == 0)
+        else if (command == "GET_LIGHT")
         {
             lightHandler(request, true);
         }
-        if (strcmp(command, "GET_NOISE") == 0)
+        else if (command == "GET_NOISE")
         {
             noiseHandler(request, true);
         }
-        if (strcmp(command, "LED_ON") == 0)
+        else if (command == "LED_ON")
         {
             ledOnHandler(request);
         }
-        if (strcmp(command, "LED_OFF") == 0)
+        else if (command == "LED_OFF")
         {
             ledOffHandler(request);
         }
-        if (strcmp(command, "SET_COLOR") == 0)
+        else if (command.startsWith("SET_COLOR"))
         {
             setColorHandler(request);
         }
