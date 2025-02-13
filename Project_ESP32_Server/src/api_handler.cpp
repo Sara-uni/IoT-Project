@@ -42,7 +42,7 @@ String processData(String data, bool vocalRequest)
     if (firstComma == -1)
     {
         Serial.println("Wrong data format");
-        return;
+        return "";
     }
 
     String type = data.substring(0, firstComma);
@@ -65,7 +65,7 @@ String processLed(String data)
     if (firstComma == -1)
     {
         Serial.println("Wrong data format");
-        return;
+        return "";
     }
 
     String active = data.substring(0, firstComma);
@@ -97,7 +97,7 @@ String processLed(String data)
     return formattedData;
 }
 
-void temperatureHandler(AsyncWebServerRequest *request, bool vocalRequest = false)
+void temperatureHandler(AsyncWebServerRequest *request, bool vocalRequest)
 {
     Serial2.println("GET_TEMP");
     Serial.println("Sent command: GET_TEMP to MSP432");
@@ -114,7 +114,7 @@ void temperatureHandler(AsyncWebServerRequest *request, bool vocalRequest = fals
     request->send(200, "application/json", processData(receivedData, vocalRequest));
 }
 
-void noiseHandler(AsyncWebServerRequest *request, bool vocalRequest = false)
+void noiseHandler(AsyncWebServerRequest *request, bool vocalRequest)
 {
     Serial2.println("GET_NOISE");
     Serial.println("Sent command: GET_NOISE to MSP432");
@@ -131,7 +131,7 @@ void noiseHandler(AsyncWebServerRequest *request, bool vocalRequest = false)
     request->send(200, "application/json", processData(receivedData, vocalRequest));
 }
 
-void lightHandler(AsyncWebServerRequest *request, bool vocalRequest = false)
+void lightHandler(AsyncWebServerRequest *request, bool vocalRequest)
 {
     Serial2.println("GET_LIGHT");
     Serial.println("Sent command: GET_LIGHT to MSP432");
@@ -252,7 +252,7 @@ void getLedStatusHandler(AsyncWebServerRequest *request)
     request->send(200, "application/json", processLed(receivedData));
 }
 
-char *getRasaResponse(String rawResponse)
+const char *getRasaResponse(String rawResponse)
 {
     JsonDocument doc;
     DeserializationError error = deserializeJson(doc, rawResponse);
@@ -286,7 +286,7 @@ void voiceCommandHandler(AsyncWebServerRequest *request, uint8_t *data, size_t l
     if (httpResponseCode > 0)
     {
         String response = http.getString();
-        char *command = getRasaResponse(response);
+        const char *command = getRasaResponse(response);
         if (strcmp(command, "GET_TEMP") == 0)
         {
             temperatureHandler(request, true);
