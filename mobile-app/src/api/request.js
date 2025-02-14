@@ -36,7 +36,7 @@ const toggleLed = async (mode) => {
     return response.data;
   } catch (error) {
     console.error("Errore nella richiesta:", error);
-    return { error: "Errore nella richiesta (" + error + ")" };
+    return { error };
   }
 };
 
@@ -48,7 +48,7 @@ const setLedColor = async (r, g, b) => {
     return response.data;
   } catch (error) {
     console.error("Errore nella richiesta:", error);
-    return { error: "Errore nella richiesta (" + error + ")" };
+    return { error };
   }
 };
 
@@ -60,7 +60,7 @@ const getLedStatus = async () => {
     return response.data;
   } catch (error) {
     console.error("Errore nella richiesta:", error);
-    return { error: "Errore nella richiesta (" + error + ")" };
+    return { error };
   }
 };
 
@@ -68,12 +68,12 @@ const sendCommand = async (command) => {
   try {
     const options = header;
     options.url = `${API_BASE_URL}/command`;
-    options.data = { command };
+    options.data = command;
     const response = await CapacitorHttp.post(options);
     return response.data;
   } catch (error) {
     console.error("Errore nella richiesta:", error);
-    return { error: "Errore nella richiesta (" + error + ")" };
+    return { error };
   }
 };
 const ApiService = {
