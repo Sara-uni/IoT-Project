@@ -36,7 +36,7 @@ const toggleLed = async (mode) => {
     return response.data;
   } catch (error) {
     console.error("Errore nella richiesta:", error);
-    return { error: "Errore nella richiesta (" + error + ")" };
+    return { error };
   }
 };
 
@@ -48,7 +48,7 @@ const setLedColor = async (r, g, b) => {
     return response.data;
   } catch (error) {
     console.error("Errore nella richiesta:", error);
-    return { error: "Errore nella richiesta (" + error + ")" };
+    return { error };
   }
 };
 
@@ -60,7 +60,7 @@ const getLedStatus = async () => {
     return response.data;
   } catch (error) {
     console.error("Errore nella richiesta:", error);
-    return { error: "Errore nella richiesta (" + error + ")" };
+    return { error };
   }
 };
 
@@ -73,7 +73,7 @@ const sendCommand = async (command) => {
     return response.data;
   } catch (error) {
     console.error("Errore nella richiesta:", error);
-    return { error: "Errore nella richiesta (" + error + ")" };
+    return { error };
   }
 };
 const ApiService = {

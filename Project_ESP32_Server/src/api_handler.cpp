@@ -137,7 +137,7 @@ void ledOnHandler(AsyncWebServerRequest *request)
     }
 
     String receivedData = Serial2.readStringUntil('\n');
-    request->send(200, "application/json", "{\"success\":\"The led is on!\"}");
+    request->send(200, "application/json", "{\"executed\":\"LED_ON\"}");
 }
 
 void ledOffHandler(AsyncWebServerRequest *request)
@@ -154,7 +154,7 @@ void ledOffHandler(AsyncWebServerRequest *request)
     }
 
     String receivedData = Serial2.readStringUntil('\n');
-    request->send(200, "application/json", "{\"success\":\"The led is off!\"}");
+    request->send(200, "application/json", "{\"executed\":\"LED_OFF\"}");
 }
 
 void setColorInternal(AsyncWebServerRequest *request, String command)
@@ -173,7 +173,9 @@ void setColorInternal(AsyncWebServerRequest *request, String command)
         return;
     }
 
-    request->send(200, "application/json", "{\"success\":\"Changed color!\"}");
+    char commandExecuted[256];
+    sprintf(commandExecuted, "{\"executed\":\"%s\"}", command);
+    request->send(200, "application/json", commandExecuted);
 }
 
 void setColorHandler(AsyncWebServerRequest *request)

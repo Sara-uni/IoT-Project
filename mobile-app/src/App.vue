@@ -71,15 +71,6 @@
           </ion-card-title>
         </ion-card-header>
         <ion-card-content v-if="ledStatus" style="padding-left: 2rem">
-          <div v-if="ledStatus">
-            <ion-alert
-              :is-open="showSetColorError"
-              header="Error Setting Color"
-              message="Some went wrong setting color, try again!"
-              :buttons="['Close']"
-              @didDismiss="() => (showSetColorError = false)"
-            ></ion-alert>
-          </div>
           <ColorPicker @changeColor="(r, g, b) => setColor(r, g, b)" />
         </ion-card-content>
       </ion-card>
@@ -90,6 +81,14 @@
         :buttons="['Close']"
         :cssClass="vocalCommandResponse.cssClass"
         @didDismiss="() => (showVocalCommandResponse = false)"
+      ></ion-alert>
+      <ion-alert
+        :is-open="showErrorAlert"
+        :header="alertError.header"
+        :message="alertError.message"
+        :buttons="['Close']"
+        cssClass="error-alert"
+        @didDismiss="() => (showErrorAlert = false)"
       ></ion-alert>
       <ion-fab
         slot="fixed"
@@ -190,7 +189,11 @@ const lastTemperatureTime = ref(null);
 const lastLightTime = ref(null);
 const lastNoiseTime = ref(null);
 const ledStatus = ref(false);
-const showSetColorError = ref(false);
+const showErrorAlert = ref(false);
+const alertError = reactive({
+  header: "",
+  message: "",
+});
 const isListening = ref(false);
 const showCommand = ref(false);
 const command = ref("");
@@ -200,6 +203,7 @@ const vocalCommandResponse = reactive({
   message: "",
   cssClass: "",
 });
+const defaultErrorMsg = "Something went wrong :(";
 
 const requestData = async () => {
   let data = await ApiService.getData("temperature");
@@ -239,24 +243,24 @@ const requestData = async () => {
 };
 
 const toggleLed = () => {
-  ApiService.toggleLed(ledStatus.value ? "on" : "off")
-    .then((data) => {
-      if (!data || data.error) {
-        ledStatus.value = !ledStatus.value;
-        if (data) console.error("Error:", data.error);
-      }
-    })
-    .catch((error) => {
-      console.error("Error:", error);
+  ApiService.toggleLed(ledStatus.value ? "on" : "off").then((data) => {
+    if (!data || data.error) {
       ledStatus.value = !ledStatus.value;
-    });
+      alertError.header = "Error switching led";
+      alertError.message = `${data?.error || defaultErrorMsg}`;
+      console.error("Error:", alertError.message);
+      showErrorAlert.value = true;
+    }
+  });
 };
 
 const setColor = (r, g, b) => {
   ApiService.setLedColor(r, g, b).then((data) => {
     if (!data || data.error) {
-      showSetColorError.value = true;
-      if (data) console.error("Error:", data.error);
+      alertError.header = "Error setting color:";
+      alertError.message = `${data?.error || defaultErrorMsg}`;
+      console.error("Error:", alertError.message);
+      showErrorAlert.value = true;
     }
   });
 };
@@ -339,7 +343,16 @@ onMounted(() => {
                 });
               vocalCommandResponse.cssClass = "noise-alert";
               showVocalCommandResponse.value = true;
+            } else if (data.executed === "LED_ON") {
+              ledStatus.value = true;
+            } else if (data.executed === "LED_OFF") {
+              ledStatus.value = false;
             }
+          } else {
+            alertError.header = "Error handling vocal command";
+            alertError.message = `${data?.error || defaultErrorMsg}`;
+            console.error("Error handling vocal request:", alertError.message);
+            showErrorAlert.value = true;
           }
         });
       }
@@ -364,6 +377,10 @@ onMounted(() => {
 
   ApiService.getLedStatus().then((data) => {
     if (!data || data.error) {
+      alertError.header = "Error getting led status";
+      alertError.message = `${data?.error || defaultErrorMsg}`;
+      showErrorAlert.value = true;
+      console.error("Error:", alertError.message);
       return;
     }
     ledStatus.value = data.active;
@@ -394,5 +411,9 @@ ion-card {
 }
 .light-alert .alert-button {
   color: rgb(175, 105, 0) !important;
+}
+
+.error-alert .alert-button {
+  color: rgb(235, 0, 0) !important;
 }
 </style>
