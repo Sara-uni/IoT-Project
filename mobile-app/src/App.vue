@@ -83,6 +83,14 @@
           <ColorPicker @changeColor="(r, g, b) => setColor(r, g, b)" />
         </ion-card-content>
       </ion-card>
+      <ion-alert
+        :is-open="showVocalCommandResponse"
+        :header="vocalCommandResponse.header"
+        :message="vocalCommandResponse.message"
+        :buttons="['Close']"
+        :cssClass="vocalCommandResponse.cssClass"
+        @didDismiss="() => (showVocalCommandResponse = false)"
+      ></ion-alert>
       <ion-fab
         slot="fixed"
         vertical="bottom"
@@ -108,7 +116,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, onMounted, onUnmounted, reactive } from "vue";
 import {
   IonCard,
   IonCardContent,
@@ -186,12 +194,23 @@ const showSetColorError = ref(false);
 const isListening = ref(false);
 const showCommand = ref(false);
 const command = ref("");
+const showVocalCommandResponse = ref(false);
+const vocalCommandResponse = reactive({
+  header: "",
+  message: "",
+  cssClass: "",
+});
 
 const requestData = async () => {
   let data = await ApiService.getData("temperature");
   if (data && !data.error && data.type == "temperature") {
     lastTemperature.value = data.value;
-    lastTemperatureTime.value = new Date(data.time);
+    lastTemperatureTime.value = new Date(data.time).toLocaleTimeString(
+      "it-IT",
+      {
+        timeZone: "Europe/Rome",
+      }
+    );
   } else {
     console.error("Error receiving temperature");
   }
@@ -199,7 +218,9 @@ const requestData = async () => {
   data = await ApiService.getData("light");
   if (data && !data.error && data.type == "light") {
     lastLight.value = data.value;
-    lastLightTime.value = new Date(data.time);
+    lastLightTime.value = new Date(data.time).toLocaleTimeString("it-IT", {
+      timeZone: "Europe/Rome",
+    });
   } else {
     console.error("Error receiving light");
   }
@@ -207,7 +228,9 @@ const requestData = async () => {
   data = await ApiService.getData("noise");
   if (data && !data.error && data.type == "noise") {
     lastNoise.value = data.value;
-    lastNoiseTime.value = new Date(data.time);
+    lastNoiseTime.value = new Date(data.time).toLocaleTimeString("it-IT", {
+      timeZone: "Europe/Rome",
+    });
   } else {
     console.error("Error receiving noise");
   }
@@ -267,11 +290,13 @@ const toggleRec = () => {
 
 const startRec = () => {
   isListening.value = true;
-  Vosk.startRecognition();
+  let res = Vosk.startRecognition();
+  console.log(res);
 };
 const stopRec = () => {
   isListening.value = false;
-  Vosk.stopRecognition();
+  let res = Vosk.stopRecognition();
+  console.log(res);
 };
 
 onMounted(() => {
@@ -282,7 +307,41 @@ onMounted(() => {
       if (parsedObject) {
         command.value = "Comando inviato: " + parsedObject.text;
         showCommand.value = true;
-        ApiService.sendCommand(parsedObject.text);
+        ApiService.sendCommand(parsedObject.text).then((data) => {
+          if (data && !data.error) {
+            if (data.type === "temperature") {
+              vocalCommandResponse.header =
+                "The temperature is " + data.value + " °C";
+              vocalCommandResponse.message =
+                "Detected at " +
+                new Date(data.time).toLocaleTimeString("it-IT", {
+                  timeZone: "Europe/Rome",
+                });
+              vocalCommandResponse.cssClass = "temperature-alert";
+              showVocalCommandResponse.value = true;
+            } else if (data.type === "light") {
+              vocalCommandResponse.header =
+                "The ambient illumination is " + data.value + " lux";
+              vocalCommandResponse.message =
+                "Detected at " +
+                new Date(data.time).toLocaleTimeString("it-IT", {
+                  timeZone: "Europe/Rome",
+                });
+              vocalCommandResponse.cssClass = "light-alert";
+              showVocalCommandResponse.value = true;
+            } else if (data.type === "noise") {
+              vocalCommandResponse.header =
+                "The noise level is " + data.value + " dB";
+              vocalCommandResponse.message =
+                "Detected at " +
+                new Date(data.time).toLocaleTimeString("it-IT", {
+                  timeZone: "Europe/Rome",
+                });
+              vocalCommandResponse.cssClass = "noise-alert";
+              showVocalCommandResponse.value = true;
+            }
+          }
+        });
       }
     }
     isListening.value = false;
@@ -312,7 +371,6 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  requestData();
   VoskPlugin.removeAllListeners();
 });
 </script>
@@ -325,5 +383,16 @@ ion-card {
   justify-content: end;
   display: flex;
   align-items: center;
+}
+</style>
+<style>
+.temperature-alert .alert-button {
+  color: rgb(25, 116, 116) !important;
+}
+.noise-alert .alert-button {
+  color: rgb(118, 29, 153) !important;
+}
+.light-alert .alert-button {
+  color: rgb(175, 105, 0) !important;
 }
 </style>

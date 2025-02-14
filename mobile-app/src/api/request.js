@@ -68,7 +68,7 @@ const sendCommand = async (command) => {
   try {
     const options = header;
     options.url = `${API_BASE_URL}/command`;
-    options.data = { command };
+    options.data = command;
     const response = await CapacitorHttp.post(options);
     return response.data;
   } catch (error) {
