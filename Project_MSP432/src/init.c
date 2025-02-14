@@ -23,35 +23,27 @@ void _temperatureSensorInit()
 
 //-----------------MICROPHONE----------------------------
 
-void _micInit(){
-    /* Initializing ADC (MCLK/1/1) */
-      ADC14_enableModule();
-      ADC14_initModule(ADC_CLOCKSOURCE_MCLK, ADC_PREDIVIDER_1, ADC_DIVIDER_1, ADC_NOROUTE);
+void _micInit()
+{
+    /* Abilita il modulo ADC */
+    ADC14_enableModule();
+    ADC14_initModule(ADC_CLOCKSOURCE_MCLK, ADC_PREDIVIDER_1, ADC_DIVIDER_1, ADC_NOROUTE);
 
+    /* Configura il pin GPIO (P4.3 -> A10) per l'ADC */
+    GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P4, GPIO_PIN3, GPIO_TERTIARY_MODULE_FUNCTION);
 
-      /* Configuring GPIOs (4.3 A10) */
-      GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P4, GPIO_PIN3,
-                                                 GPIO_TERTIARY_MODULE_FUNCTION);
+    /* Configura la memoria dell'ADC */
+    ADC14_configureSingleSampleMode(ADC_MEM0, true);
+    ADC14_configureConversionMemory(ADC_MEM0, ADC_VREFPOS_AVCC_VREFNEG_VSS, ADC_INPUT_A10, false);
 
-      /* Configuring ADC Memory */
-      ADC14_configureSingleSampleMode(ADC_MEM0, true);
-      ADC14_configureConversionMemory(ADC_MEM0, ADC_VREFPOS_AVCC_VREFNEG_VSS,
-                                      ADC_INPUT_A10, false);
+    /* Imposta il formato del risultato (unsigned binary) */
+    ADC14_setResultFormat(ADC_SIGNED_BINARY);
 
-      /* Set ADC result format to signed binary */
-      ADC14_setResultFormat(ADC_SIGNED_BINARY);
+    /* Disabilita la modalità automatica, ora il trigger sarà manuale */
+    ADC14_enableSampleTimer(ADC_MANUAL_ITERATION);
 
-      /* Enabling manual iteration mode and interrupts */
-      ADC14_enableSampleTimer(ADC_MANUAL_ITERATION);
-      ADC14_enableInterrupt(ADC_INT0);
-
-      /* Enabling Interrupts */
-      Interrupt_enableInterrupt(INT_ADC14);
-      Interrupt_enableMaster();
-
-      /* Triggering the start of the sample */
-      ADC14_enableConversion();
-      ADC14_toggleConversionTrigger();
+    /* Abilita l'ADC */
+    ADC14_enableConversion();
 }
 
 //---------------------------------------------------
@@ -98,7 +90,7 @@ void _hwInit()
     /* Configuring P1.0 as output */
     // GPIO_setAsOutputPin(GPIO_PORT_P1, GPIO_PIN0);
     // GPIO_setOutputLowOnPin(GPIO_PORT_P1, GPIO_PIN0);
-    
+
     _graphicsInit();
     _temperatureSensorInit();
     _micInit();
