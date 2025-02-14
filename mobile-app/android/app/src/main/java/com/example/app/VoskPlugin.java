@@ -117,7 +117,7 @@ public class VoskPlugin extends Plugin {
                         audioRecord.stop();
                         audioRecord.release();
                     } catch (JSONException e) {
-                        throw new RuntimeException(e);
+                        Log.e(TAG, "startAudioCapture: {}", e);
                     }
                     notifyTranscription(finalResult); // Notifica la frase completa
                 }
