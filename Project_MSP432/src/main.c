@@ -10,7 +10,7 @@
 #include <string.h>
 #include <ledControl.h>
 
-int red_led = 0, green_led = 0, blue_led = 0;
+bool led = true;
 
 void sendTemperature()
 {
@@ -67,29 +67,14 @@ void sendLight()
 }
 
 void setColor(int r, int g, int b) {
-    compareConfig_PWM_Red.compareValue = r;   // Setta il valore PWM per il rosso
+    compareConfig_PWM_Red.compareValue = (r * 5000) / 255;
     Timer_A_initCompare(TIMER_A0_BASE, &compareConfig_PWM_Red);
 
-    compareConfig_PWM_Green.compareValue = g; // Setta il valore PWM per il verde
+    compareConfig_PWM_Green.compareValue = (g * 5000) / 255;
     Timer_A_initCompare(TIMER_A0_BASE, &compareConfig_PWM_Green);
 
-    compareConfig_PWM_Blue.compareValue = b;  // Setta il valore PWM per il blu
+    compareConfig_PWM_Blue.compareValue = (b * 5000) / 255;
     Timer_A_initCompare(TIMER_A2_BASE, &compareConfig_PWM_Blue);
-}
-
-void turnLed(uint8_t pin, bool mode) {
-    if (pin == BIT0) {
-        red_led = mode;
-    } else if (pin == BIT1) {
-        green_led = mode;
-    } else if (pin == BIT2) {
-        blue_led = mode;
-    }
-    if (mode) {
-        P2OUT |= pin;
-    } else {
-        P2OUT &= ~pin;
-    }
 }
 
 
@@ -119,17 +104,15 @@ int main(void)
             }
             else if (strcmp(command, "LED_ON") == 0)
             {
+                setColor(255, 255, 255);
+                led = true;
                 UART_sendString("OK\n");
-                turnLed(BIT0, true);
-                turnLed(BIT1, true);
-                turnLed(BIT2, true);
             }
             else if (strcmp(command, "LED_OFF") == 0)
             {
+                setColor(0, 0, 0);
+                led = false;
                 UART_sendString("OK\n");
-                turnLed(BIT0, false);
-                turnLed(BIT1, false);
-                turnLed(BIT2, false);
             }
             if (strncmp(command, "SET_COLOR", 9) == 0)
             {
@@ -137,18 +120,19 @@ int main(void)
                 sscanf(command, "SET_COLOR(%d, %d, %d)", &r, &g, &b);
                 
                 setColor(r, g, b);
+                led = true;
                 UART_sendString("OK\n");
             }
             else if (strcmp(command, "GET_LED") == 0)
             {
-                char response[40];
-                if (red_led || green_led || blue_led)
+                char response[10];
+                if (led)
                 {
-                    sprintf(response, "true,\n");
+                    sprintf(response, "true\n");
                 }
                 else
                 {
-                    sprintf(response, "false,\n");
+                    sprintf(response, "false\n");
                 }
                 sprintf(response, "%s\n", response);
                 UART_sendString(response);
