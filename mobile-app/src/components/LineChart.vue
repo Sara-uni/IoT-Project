@@ -176,7 +176,7 @@ watch(
   () => props.newTime,
   () => {
     if (chartRef.value && props.newData) {
-      chartData.labels.push(props.newTime.toLocaleTimeString());
+      chartData.labels.push(props.newTime);
       chartData.datasets[0].data.push(props.newData);
       chartRef.value.chart.update();
 

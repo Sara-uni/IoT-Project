@@ -1,5 +1,6 @@
 #include "init.h"
 #include "uart.h"
+#include "ledControl.h"
 #include <ti/devices/msp432p4xx/driverlib/driverlib.h>
 #include "LcdDriver/Crystalfontz128x128_ST7735.h"
 #include "LcdDriver/HAL_MSP_EXP432P401R_Crystalfontz128x128_ST7735.h"
@@ -97,11 +98,12 @@ void _hwInit()
     /* Configuring P1.0 as output */
     // GPIO_setAsOutputPin(GPIO_PORT_P1, GPIO_PIN0);
     // GPIO_setOutputLowOnPin(GPIO_PORT_P1, GPIO_PIN0);
-
+    
     _graphicsInit();
     _temperatureSensorInit();
     _micInit();
     _uartInit();
+    _ledInit();
 }
 
 void _showText(char *title, char *text)
