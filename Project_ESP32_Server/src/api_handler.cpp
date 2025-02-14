@@ -64,36 +64,8 @@ String processData(String data, bool vocalRequest)
 
 String processLed(String data)
 {
-    int firstComma = data.indexOf(',');
-    if (firstComma == -1)
-    {
-        Serial.println("Wrong data format");
-        return "";
-    }
-
-    String active = data.substring(0, firstComma);
-    String colors = data.substring(firstComma + 1);
-
     JsonDocument jsonDoc;
-    jsonDoc["active"] = active;
-
-    if (active == "true")
-    {
-        int redIndex = colors.indexOf(',');
-        String red = colors.substring(0, redIndex);
-        colors = colors.substring(redIndex + 1);
-        jsonDoc["r"] = red;
-
-        int greenIndex = colors.indexOf(',');
-        String green = colors.substring(0, greenIndex);
-        colors = colors.substring(greenIndex + 1);
-        jsonDoc["g"] = green;
-
-        int blueIndex = colors.indexOf(',');
-        String blue = colors.substring(0, blueIndex);
-        colors = colors.substring(blueIndex + 1);
-        jsonDoc["b"] = blue;
-    }
+    jsonDoc["active"] = data;
 
     String formattedData = "";
     serializeJson(jsonDoc, formattedData);
