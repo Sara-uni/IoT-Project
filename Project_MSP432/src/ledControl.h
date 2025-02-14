@@ -7,10 +7,8 @@ extern Timer_A_CompareModeConfig compareConfig_PWM_Red;
 extern Timer_A_CompareModeConfig compareConfig_PWM_Green;
 extern Timer_A_CompareModeConfig compareConfig_PWM_Blue;
 
-// Dichiarazione della funzione setColor che viene utilizzata in ledControl.c
 void setColor(int r, int g, int b);
 
-// Funzione per l'inizializzazione dei LED
 void _ledInit(void);
 
-#endif /* LEDCONTROL_H_ */
+#endif
