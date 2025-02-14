@@ -164,6 +164,7 @@ void ledOnHandler(AsyncWebServerRequest *request)
         return;
     }
 
+    String receivedData = Serial2.readStringUntil('\n');
     request->send(200, "application/json", "{\"success\":\"The led is on!\"}");
 }
 
@@ -180,7 +181,27 @@ void ledOffHandler(AsyncWebServerRequest *request)
         return;
     }
 
+    String receivedData = Serial2.readStringUntil('\n');
     request->send(200, "application/json", "{\"success\":\"The led is off!\"}");
+}
+
+void setColorInternal(AsyncWebServerRequest *request, String command)
+{
+    Serial2.println(command);
+
+    char string[256];
+    sprintf(string, "\nSent command: %s", command);
+    Serial.println(command);
+
+    bool getResponse = waitResponse();
+    if (!getResponse)
+    {
+        Serial.println("Error: Timeout waiting for response from MSP432.");
+        request->send(500, "application/json", "{\"error\":\"Timeout MSP432\"}");
+        return;
+    }
+
+    request->send(200, "application/json", "{\"success\":\"Changed color!\"}");
 }
 
 void setColorHandler(AsyncWebServerRequest *request)
@@ -221,21 +242,8 @@ void setColorHandler(AsyncWebServerRequest *request)
 
     char command[30];
     snprintf(command, sizeof(command), "SET_COLOR(%s, %s, %s)", red.c_str(), green.c_str(), blue.c_str());
-    Serial2.println(command);
 
-    char string[256];
-    sprintf(string, "\nSent command: %s", command);
-    Serial.println(command);
-
-    bool getResponse = waitResponse();
-    if (!getResponse)
-    {
-        Serial.println("Error: Timeout waiting for response from MSP432.");
-        request->send(500, "application/json", "{\"error\":\"Timeout MSP432\"}");
-        return;
-    }
-
-    request->send(200, "application/json", "{\"success\":\"Changed color!\"}");
+    setColorInternal(request, command);
 }
 
 void getLedStatusHandler(AsyncWebServerRequest *request)
@@ -314,7 +322,7 @@ void voiceCommandHandler(AsyncWebServerRequest *request, uint8_t *data, size_t l
         }
         else if (command.startsWith("SET_COLOR"))
         {
-            setColorHandler(request);
+            setColorInternal(request, command);
         }
         else
         {

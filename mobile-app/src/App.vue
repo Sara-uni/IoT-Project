@@ -116,7 +116,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, onMounted, onUnmounted, reactive } from "vue";
 import {
   IonCard,
   IonCardContent,
@@ -195,72 +195,42 @@ const isListening = ref(false);
 const showCommand = ref(false);
 const command = ref("");
 const showVocalCommandResponse = ref(false);
-const vocalCommandResponse = ref({ header: "", message: "", cssClass: "" });
+const vocalCommandResponse = reactive({
+  header: "",
+  message: "",
+  cssClass: "",
+});
 
 const requestData = async () => {
   let data = await ApiService.getData("temperature");
   if (data && !data.error && data.type == "temperature") {
-    if (!data.vocalRequest) {
-      lastTemperature.value = data.value;
-      lastTemperatureTime.value = new Date(data.time).toLocaleTimeString(
-        "it-IT",
-        {
-          timeZone: "Europe/Rome",
-        }
-      );
-    } else {
-      vocalCommandResponse.header = "The temperature is " + data.value + " °C";
-      vocalCommandResponse.message =
-        "Detected at " +
-        new Date(data.time).toLocaleTimeString("it-IT", {
-          timeZone: "Europe/Rome",
-        });
-      vocalCommandResponse.cssClass = "temperature-alert";
-      showVocalCommandResponse.value = true;
-    }
+    lastTemperature.value = data.value;
+    lastTemperatureTime.value = new Date(data.time).toLocaleTimeString(
+      "it-IT",
+      {
+        timeZone: "Europe/Rome",
+      }
+    );
   } else {
     console.error("Error receiving temperature");
   }
 
   data = await ApiService.getData("light");
   if (data && !data.error && data.type == "light") {
-    if (!data.vocalRequest) {
-      lastLight.value = data.value;
-      lastLightTime.value = new Date(data.time).toLocaleTimeString("it-IT", {
-        timeZone: "Europe/Rome",
-      });
-    } else {
-      vocalCommandResponse.header =
-        "The ambient illumination is " + data.value + " lux";
-      vocalCommandResponse.message =
-        "Detected at " +
-        new Date(data.time).toLocaleTimeString("it-IT", {
-          timeZone: "Europe/Rome",
-        });
-      vocalCommandResponse.cssClass = "light-alert";
-      showVocalCommandResponse.value = true;
-    }
+    lastLight.value = data.value;
+    lastLightTime.value = new Date(data.time).toLocaleTimeString("it-IT", {
+      timeZone: "Europe/Rome",
+    });
   } else {
     console.error("Error receiving light");
   }
 
   data = await ApiService.getData("noise");
   if (data && !data.error && data.type == "noise") {
-    if (!data.vocalRequest) {
-      lastNoise.value = data.value;
-      lastNoiseTime.value = new Date(data.time).toLocaleTimeString("it-IT", {
-        timeZone: "Europe/Rome",
-      });
-    } else {
-      vocalCommandResponse.header = "The noise level is " + data.value + " dB";
-      vocalCommandResponse.message =
-        "Detected at " +
-        new Date(data.time).toLocaleTimeString("it-IT", {
-          timeZone: "Europe/Rome",
-        });
-      vocalCommandResponse.cssClass = "noise-alert";
-      showVocalCommandResponse.value = true;
-    }
+    lastNoise.value = data.value;
+    lastNoiseTime.value = new Date(data.time).toLocaleTimeString("it-IT", {
+      timeZone: "Europe/Rome",
+    });
   } else {
     console.error("Error receiving noise");
   }
@@ -320,11 +290,13 @@ const toggleRec = () => {
 
 const startRec = () => {
   isListening.value = true;
-  Vosk.startRecognition();
+  let res = Vosk.startRecognition();
+  console.log(res);
 };
 const stopRec = () => {
   isListening.value = false;
-  Vosk.stopRecognition();
+  let res = Vosk.stopRecognition();
+  console.log(res);
 };
 
 onMounted(() => {
@@ -335,7 +307,41 @@ onMounted(() => {
       if (parsedObject) {
         command.value = "Comando inviato: " + parsedObject.text;
         showCommand.value = true;
-        ApiService.sendCommand(parsedObject.text);
+        ApiService.sendCommand(parsedObject.text).then((data) => {
+          if (data && !data.error) {
+            if (data.type === "temperature") {
+              vocalCommandResponse.header =
+                "The temperature is " + data.value + " °C";
+              vocalCommandResponse.message =
+                "Detected at " +
+                new Date(data.time).toLocaleTimeString("it-IT", {
+                  timeZone: "Europe/Rome",
+                });
+              vocalCommandResponse.cssClass = "temperature-alert";
+              showVocalCommandResponse.value = true;
+            } else if (data.type === "light") {
+              vocalCommandResponse.header =
+                "The ambient illumination is " + data.value + " lux";
+              vocalCommandResponse.message =
+                "Detected at " +
+                new Date(data.time).toLocaleTimeString("it-IT", {
+                  timeZone: "Europe/Rome",
+                });
+              vocalCommandResponse.cssClass = "light-alert";
+              showVocalCommandResponse.value = true;
+            } else if (data.type === "noise") {
+              vocalCommandResponse.header =
+                "The noise level is " + data.value + " dB";
+              vocalCommandResponse.message =
+                "Detected at " +
+                new Date(data.time).toLocaleTimeString("it-IT", {
+                  timeZone: "Europe/Rome",
+                });
+              vocalCommandResponse.cssClass = "noise-alert";
+              showVocalCommandResponse.value = true;
+            }
+          }
+        });
       }
     }
     isListening.value = false;
@@ -365,7 +371,6 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  requestData();
   VoskPlugin.removeAllListeners();
 });
 </script>
@@ -379,13 +384,15 @@ ion-card {
   display: flex;
   align-items: center;
 }
-.temperature-alert {
-  --background: rgb(75, 192, 192);
+</style>
+<style>
+.temperature-alert .alert-button {
+  color: rgb(25, 116, 116) !important;
 }
-.noise-alert {
-  --background: rgb(206, 77, 255);
+.noise-alert .alert-button {
+  color: rgb(118, 29, 153) !important;
 }
-.light-alert {
-  --background: rgb(255, 153, 0);
+.light-alert .alert-button {
+  color: rgb(175, 105, 0) !important;
 }
 </style>

@@ -117,6 +117,7 @@ class ActionChangeLedColor(Action):
 
 
 color_map = {
+    #english color
     "red":      [255, 0, 0],
     "green":    [0, 255, 0],
     "blue":     [0, 0, 255],
@@ -129,5 +130,20 @@ color_map = {
     "orange":   [255, 165, 0],
     "pink":     [255, 192, 203],
     "brown":    [139, 69, 19],
-    "gray":     [128, 128, 128]
+    "gray":     [128, 128, 128],
+
+    #italian color
+    "rosso": [255, 0, 0],
+    "verde": [0, 255, 0],
+    "blu": [0, 0, 255],
+    "giallo": [255, 255, 0],
+    "viola": [255, 0, 255],
+    "ciano": [0, 255, 255],
+    "azzurro": [0, 255, 255],
+    "bianco": [255, 255, 255],
+    "nero": [0, 0, 0],
+    "arancione": [255, 165, 0],
+    "rosa": [255, 192, 203],
+    "marrone": [139, 69, 19],
+    "grigio": [128, 128, 128]
 }
