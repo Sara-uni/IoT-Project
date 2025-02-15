@@ -10,8 +10,8 @@
 AsyncWebServer server(80);
 
 // parameters for a existing wifi network (required to get the timestamp)
-const char *ssidWifi = "WRL#12IRIDEOS";
-const char *pswWifi = "Matty!!2003";
+const char *ssidWifi = "OnePlus Nord";
+const char *pswWifi = "androids";
 const char *ntpServer = "pool.ntp.org";
 const long gmtOffset_sec = 0;
 const int daylightOffset_sec = 0;
@@ -23,6 +23,7 @@ const char *password = "123456789";
 void serverSetup()
 {
   Serial.println("Connecting to WiFi...");
+  Serial2.println("PRINT(Connecting to WiFi, Please wait)");
   WiFi.begin(ssidWifi, pswWifi);
 
   int attempts = 0;
@@ -39,6 +40,7 @@ void serverSetup()
     if (attempts > 30)
     { // Timeout after 15 seconds
       Serial.println("\nFailed to connect to WiFi! Restarting...");
+      Serial2.println("PRINT(Failed to connect, Restarting...)");
       ESP.restart();
     }
   }
@@ -46,6 +48,9 @@ void serverSetup()
   Serial.println("\nWiFi Connected!");
   Serial.print("IP Address: ");
   Serial.println(WiFi.localIP());
+
+  String ipMessage = "PRINT(IP Address:, " + WiFi.localIP().toString() + ")";
+  Serial2.println(ipMessage);
 
   configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
 
@@ -103,6 +108,8 @@ void loop()
     if (WiFi.status() != WL_CONNECTED)
     {
       Serial.println("WiFi DISCONNECTED! Trying to reconnect...");
+      Serial2.println("PRINT(WiFi DISCONNECTED!, Trying to reconnect)");
+
       WiFi.disconnect();
       WiFi.reconnect();
 
@@ -122,10 +129,14 @@ void loop()
         Serial.println("\nWiFi RECONNECTED!");
         Serial.print("New IP: ");
         Serial.println(WiFi.localIP());
+
+        char ipMessage[60];
+        sprintf(ipMessage, "PRINT(%s, %s)", "IP Address:", WiFi.localIP());
+        Serial2.println(ipMessage);
       }
       else
       {
-        Serial.println("\nFailed to reconnect.");
+        Serial.println("Failed to reconnect!, Retry..");
       }
     }
   }

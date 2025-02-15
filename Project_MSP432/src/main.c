@@ -17,9 +17,9 @@ void sendTemperature()
     // Obtain temperature value and convert it into CELSIUS
     float temp = (TMP006_getTemp() - 32) / 1.8;
 
-    char string[20];
-    sprintf(string, "%.2f C", temp);
-    _showText("Temperature:", string);
+    // char string[20];
+    // sprintf(string, "%.2f C", temp);
+    // _showText("Temperature:", string);
 
     char tempStr[10];
     snprintf(tempStr, sizeof(tempStr), "%.2f", temp);
@@ -34,9 +34,9 @@ void sendNoise()
 {
     float noise = getNoise();
 
-    char string[20];
-    sprintf(string, "%.2f Db", noise);
-    _showText("Noise:", string);
+    // char string[20];
+    // sprintf(string, "%.2f Db", noise);
+    // _showText("Noise:", string);
 
     char valuestr[10];
     snprintf(valuestr, sizeof(valuestr), "%.2f", noise);
@@ -52,9 +52,9 @@ void sendLight()
 {
     float light = 1543.49;
 
-    char string[20];
-    sprintf(string, "%.2f lux", light);
-    _showText("Light:", string);
+    // char string[20];
+    // sprintf(string, "%.2f lux", light);
+    // _showText("Light:", string);
 
     char valuestr[10];
     snprintf(valuestr, sizeof(valuestr), "%.2f", light);
@@ -82,11 +82,11 @@ int main(void)
 {
     _hwInit();
 
-    char command[30];
+    char command[60];
     while (1)
     {
         UART_receiveString(command, sizeof(command));
-        if (command)
+        if (sizeof(command) > 0)
         {
             if (strcmp(command, "GET_TEMP") == 0)
             {
@@ -112,7 +112,7 @@ int main(void)
                 led = false;
                 UART_sendString("OK\n");
             }
-            if (strncmp(command, "SET_COLOR", 9) == 0)
+            else if (strncmp(command, "SET_COLOR", 9) == 0)
             {
                 int r = 0, g = 0, b = 0;
                 sscanf(command, "SET_COLOR(%d, %d, %d)", &r, &g, &b);
@@ -124,6 +124,12 @@ int main(void)
             else if (strcmp(command, "GET_LED") == 0)
             {
                 led ? UART_sendString("true\n") : UART_sendString("false\n");
+            }
+            else if (strncmp(command, "PRINT", 5) == 0)
+            {
+                char title[30], text[30];
+                sscanf(command, "PRINT(%[^,], %[^)])", title, text);
+                _showText(title, text);
             }
         }
     }
