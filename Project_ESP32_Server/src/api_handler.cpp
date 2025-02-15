@@ -4,8 +4,8 @@
 #include "api_handler.h"
 
 // ip server rasa
-const char *rasaIp = "10.254.254.129";
-// const char *rasaIp = "192.168.4.2";
+// const char *rasaIp = "10.254.254.129";
+const char *rasaIp = "192.168.4.2";
 
 bool waitResponse(int timeoutMs = 1000)
 {
@@ -37,7 +37,7 @@ String getFormattedTimestamp()
 }
 
 // give the right JSON format to the data we acquired
-String processData(String data, bool vocalRequest)
+String processData(String data)
 {
     Serial.print("Data to process: ");
     Serial.println(data);
@@ -55,7 +55,6 @@ String processData(String data, bool vocalRequest)
     jsonDoc["type"] = type;
     jsonDoc["value"] = value;
     jsonDoc["time"] = getFormattedTimestamp();
-    jsonDoc["vocalRequest"] = vocalRequest;
 
     String formattedData = "";
     serializeJson(jsonDoc, formattedData);
@@ -72,7 +71,7 @@ String processLed(String data)
     return formattedData;
 }
 
-void temperatureHandler(AsyncWebServerRequest *request, bool vocalRequest)
+void temperatureHandler(AsyncWebServerRequest *request)
 {
     Serial2.println("GET_TEMP");
     Serial.println("\nSent command: GET_TEMP to MSP432");
@@ -86,10 +85,10 @@ void temperatureHandler(AsyncWebServerRequest *request, bool vocalRequest)
     }
 
     String receivedData = Serial2.readStringUntil('\n');
-    request->send(200, "application/json", processData(receivedData, vocalRequest));
+    request->send(200, "application/json", processData(receivedData));
 }
 
-void noiseHandler(AsyncWebServerRequest *request, bool vocalRequest)
+void noiseHandler(AsyncWebServerRequest *request)
 {
     Serial2.println("GET_NOISE");
     Serial.println("\nSent command: GET_NOISE to MSP432");
@@ -103,10 +102,10 @@ void noiseHandler(AsyncWebServerRequest *request, bool vocalRequest)
     }
 
     String receivedData = Serial2.readStringUntil('\n');
-    request->send(200, "application/json", processData(receivedData, vocalRequest));
+    request->send(200, "application/json", processData(receivedData));
 }
 
-void lightHandler(AsyncWebServerRequest *request, bool vocalRequest)
+void lightHandler(AsyncWebServerRequest *request)
 {
     Serial2.println("GET_LIGHT");
     Serial.println("\nSent command: GET_LIGHT to MSP432");
@@ -120,7 +119,7 @@ void lightHandler(AsyncWebServerRequest *request, bool vocalRequest)
     }
 
     String receivedData = Serial2.readStringUntil('\n');
-    request->send(200, "application/json", processData(receivedData, vocalRequest));
+    request->send(200, "application/json", processData(receivedData));
 }
 
 void ledOnHandler(AsyncWebServerRequest *request)
@@ -276,15 +275,15 @@ void voiceCommandHandler(AsyncWebServerRequest *request, uint8_t *data, size_t l
         Serial.println(command);
         if (command == "GET_TEMP")
         {
-            temperatureHandler(request, true);
+            temperatureHandler(request);
         }
         else if (command == "GET_LIGHT")
         {
-            lightHandler(request, true);
+            lightHandler(request);
         }
         else if (command == "GET_NOISE")
         {
-            noiseHandler(request, true);
+            noiseHandler(request);
         }
         else if (command == "LED_ON")
         {

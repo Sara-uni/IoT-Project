@@ -70,9 +70,9 @@ void serverSetup()
     html += "</body></html>";
     request->send(200, "text/html", html); });
 
-  server.on("/temperature", HTTP_GET, [](AsyncWebServerRequest * request) {temperatureHandler(request, false);});
-  server.on("/noise", HTTP_GET, [](AsyncWebServerRequest * request) {noiseHandler(request, false);});
-  server.on("/light", HTTP_GET, [](AsyncWebServerRequest * request) {lightHandler(request, false);});
+  server.on("/temperature", HTTP_GET, temperatureHandler);
+  server.on("/noise", HTTP_GET, noiseHandler);
+  server.on("/light", HTTP_GET, lightHandler);
   server.on("/led/on", HTTP_GET, ledOnHandler);
   server.on("/led/off", HTTP_GET, ledOffHandler);
   server.on("/led-color", HTTP_GET, setColorHandler);
