@@ -10,7 +10,7 @@
 #include <ledControl.h>
 #include <noiseControl.h>
 
-bool led = true;
+bool led = false;
 
 void sendTemperature()
 {
@@ -123,17 +123,7 @@ int main(void)
             }
             else if (strcmp(command, "GET_LED") == 0)
             {
-                char response[10];
-                if (led)
-                {
-                    sprintf(response, "true\n");
-                }
-                else
-                {
-                    sprintf(response, "false\n");
-                }
-                sprintf(response, "%s\n", response);
-                UART_sendString(response);
+                led ? UART_sendString("true\n") : UART_sendString("false\n");
             }
         }
     }

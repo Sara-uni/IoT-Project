@@ -16,7 +16,6 @@ bool waitResponse(int timeoutMs = 1000)
         {
             return false;
         }
-        yield();
     }
     return true;
 }
@@ -45,7 +44,12 @@ String processData(String data)
     if (firstComma == -1)
     {
         Serial.println("Wrong data format");
-        return "";
+        JsonDocument jsonDoc;
+        jsonDoc["error"] = "Wrong data format";
+
+        String formattedData = "";
+        serializeJson(jsonDoc, formattedData);
+        return formattedData;
     }
 
     String type = data.substring(0, firstComma);
@@ -63,8 +67,17 @@ String processData(String data)
 
 String processLed(String data)
 {
+    if (data == "true" || data == "false")
+    {
+        JsonDocument jsonDoc;
+        jsonDoc["active"] = data;
+
+        String formattedData = "";
+        serializeJson(jsonDoc, formattedData);
+        return formattedData;
+    }
     JsonDocument jsonDoc;
-    jsonDoc["active"] = data;
+    jsonDoc["error"] = "Wrong data format";
 
     String formattedData = "";
     serializeJson(jsonDoc, formattedData);
