@@ -41,9 +41,9 @@ void _uartInit()
     UART_enableModule(EUSCI_A0_BASE);
 
     /* Abilitare gli interrupt UART per la ricezione */
-    UART_enableInterrupt(EUSCI_A0_BASE, EUSCI_A_UART_RECEIVE_INTERRUPT);
-    Interrupt_enableInterrupt(INT_EUSCIA0);
-    Interrupt_enableSleepOnIsrExit();
+    // UART_enableInterrupt(EUSCI_A0_BASE, EUSCI_A_UART_RECEIVE_INTERRUPT);
+    // Interrupt_enableInterrupt(INT_EUSCIA0);
+    // Interrupt_enableSleepOnIsrExit();
 }
 
 void UART_sendString(char *str)

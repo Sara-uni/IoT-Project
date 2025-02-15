@@ -21,6 +21,35 @@ void _temperatureSensorInit()
     __delay_cycles(100000);
 }
 
+//-----------------MICROPHONE----------------------------
+
+void _micInit()
+{
+    /* Enable ADC module */
+    ADC14_enableModule();
+    ADC14_initModule(ADC_CLOCKSOURCE_MCLK, ADC_PREDIVIDER_1, ADC_DIVIDER_1, ADC_NOROUTE);
+
+    /* Configure GPIO pin (P4.3 -> A10) for ADC input */
+    GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P4, GPIO_PIN3, GPIO_TERTIARY_MODULE_FUNCTION);
+
+    /* Configure ADC memory */
+    ADC14_configureSingleSampleMode(ADC_MEM0, true);
+    ADC14_configureConversionMemory(ADC_MEM0, ADC_VREFPOS_AVCC_VREFNEG_VSS, ADC_INPUT_A10, false);
+
+    /* Set result format (signed binary) */
+    ADC14_setResultFormat(ADC_SIGNED_BINARY);
+
+    /* Enable ADC interrupt */
+    ADC14_enableInterrupt(ADC_INT0);
+    Interrupt_enableInterrupt(INT_ADC14);
+
+    /* Set manual trigger mode */
+    ADC14_enableSampleTimer(ADC_MANUAL_ITERATION);
+
+    /* Enable ADC conversion */
+    ADC14_enableConversion();
+}
+
 //---------------------------------------------------
 
 Graphics_Context g_sContext;
@@ -65,25 +94,14 @@ void _hwInit()
     /* Configuring P1.0 as output */
     // GPIO_setAsOutputPin(GPIO_PORT_P1, GPIO_PIN0);
     // GPIO_setOutputLowOnPin(GPIO_PORT_P1, GPIO_PIN0);
-    
+
     _graphicsInit();
     _temperatureSensorInit();
+    _micInit();
     _uartInit();
     _ledInit();
-}
 
-void _showTextTemp(char *string, float temp)
-{
-    Graphics_drawStringCentered(&g_sContext, (int8_t *)"Temperature:",
-                                AUTO_STRING_LENGTH, 64, 30, OPAQUE_TEXT);
-
-    sprintf(string, "%.2f", temp);
-    Graphics_drawStringCentered(&g_sContext, (int8_t *)string, 5, 55, 70,
-                                OPAQUE_TEXT);
-
-    sprintf(string, "C");
-    Graphics_drawStringCentered(&g_sContext, (int8_t *)string, 5, 80, 70,
-                                OPAQUE_TEXT);
+    Interrupt_enableMaster();
 }
 
 void _showText(char *title, char *text)
