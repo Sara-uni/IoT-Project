@@ -23,12 +23,10 @@ int16_t requestNoiseMeasurement()
 float getNoise()
 {
     requestNoiseMeasurement();
-    const int adc_max = 8191;
     if (noise == 0)
         return 0.0;
-
-    double normalized = (double)adc_max / fabs((double)noise);
-    return 20.0 * log10(normalized);
+    // v_ref = 1 so we have to do the logarithm only
+    return 20.0 * log10(fabs((double)noise));
 }
 
 void ADC14_IRQHandler(void)
