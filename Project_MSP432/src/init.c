@@ -25,24 +25,28 @@ void _temperatureSensorInit()
 
 void _micInit()
 {
-    /* Abilita il modulo ADC */
+    /* Enable ADC module */
     ADC14_enableModule();
     ADC14_initModule(ADC_CLOCKSOURCE_MCLK, ADC_PREDIVIDER_1, ADC_DIVIDER_1, ADC_NOROUTE);
 
-    /* Configura il pin GPIO (P4.3 -> A10) per l'ADC */
+    /* Configure GPIO pin (P4.3 -> A10) for ADC input */
     GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P4, GPIO_PIN3, GPIO_TERTIARY_MODULE_FUNCTION);
 
-    /* Configura la memoria dell'ADC */
+    /* Configure ADC memory */
     ADC14_configureSingleSampleMode(ADC_MEM0, true);
     ADC14_configureConversionMemory(ADC_MEM0, ADC_VREFPOS_AVCC_VREFNEG_VSS, ADC_INPUT_A10, false);
 
-    /* Imposta il formato del risultato (unsigned binary) */
+    /* Set result format (signed binary) */
     ADC14_setResultFormat(ADC_SIGNED_BINARY);
 
-    /* Disabilita la modalità automatica, ora il trigger sarà manuale */
+    /* Enable ADC interrupt */
+    ADC14_enableInterrupt(ADC_INT0);
+    Interrupt_enableInterrupt(INT_ADC14);
+
+    /* Set manual trigger mode */
     ADC14_enableSampleTimer(ADC_MANUAL_ITERATION);
 
-    /* Abilita l'ADC */
+    /* Enable ADC conversion */
     ADC14_enableConversion();
 }
 
@@ -96,6 +100,8 @@ void _hwInit()
     _micInit();
     _uartInit();
     _ledInit();
+
+    Interrupt_enableMaster();
 }
 
 void _showText(char *title, char *text)
