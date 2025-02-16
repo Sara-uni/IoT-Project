@@ -3,10 +3,17 @@
     <ion-header>
       <ion-toolbar>
         <ion-buttons slot="primary">
-          <ion-button id="ip-settings">
+          <ion-button id="ip-setting">
             <ion-icon
               slot="icon-only"
-              :md="settingsSharp"
+              :md="globeOutline"
+              color="dark"
+            ></ion-icon>
+          </ion-button>
+          <ion-button id="lang-setting">
+            <ion-icon
+              slot="icon-only"
+              :md="languageOutline"
               color="dark"
             ></ion-icon>
           </ion-button>
@@ -16,17 +23,47 @@
     </ion-header>
     <ion-content>
       <ion-alert
-        trigger="ip-settings"
-        header="Insert the IP:"
+        trigger="ip-setting"
+        header="Set IP Address:"
         :buttons="[
           'Cancel',
-          { text: 'Confirm', handler: (data) => setIp(data.ip) },
+          {
+            text: 'Confirm',
+            handler: (data) => setIpAddress(data.ip),
+          },
         ]"
         :inputs="[
           {
             name: 'ip',
             placeholder: '192.168.0.1',
             value: getIp(),
+          },
+        ]"
+      ></ion-alert>
+      <ion-alert
+        trigger="lang-setting"
+        header="Choose a language:"
+        :buttons="[
+          'Cancel',
+          {
+            text: 'Confirm',
+            handler: (data) => setLanguage(data),
+          },
+        ]"
+        :inputs="[
+          {
+            name: 'language',
+            type: 'radio',
+            label: 'English',
+            value: 'en-US',
+            checked: getLanguage() === 'en-US',
+          },
+          {
+            name: 'language',
+            type: 'radio',
+            label: 'Italian',
+            value: 'it-IT',
+            checked: getLanguage() === 'it-IT',
           },
         ]"
       ></ion-alert>
@@ -115,7 +152,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, reactive } from "vue";
+import { ref, onMounted, reactive } from "vue";
 import {
   IonCard,
   IonCardContent,
@@ -139,11 +176,12 @@ import {
 import LineChart from "./components/LineChart.vue";
 import ApiService from "./api/request.js";
 import ColorPicker from "./components/ColorPicker.vue";
-import { Vosk } from "./api/vosk.js";
-import { mic, micOff, settingsSharp } from "ionicons/icons";
-import { registerPlugin } from "@capacitor/core";
-
-const VoskPlugin = registerPlugin("VoskPlugin");
+import { mic, micOff, globeOutline, languageOutline } from "ionicons/icons";
+import {
+  requestPermission,
+  startListening,
+  stopListening,
+} from "./api/speech-recognition.js";
 
 const temperature = {
   labels: [],
@@ -265,11 +303,82 @@ const setColor = (r, g, b) => {
   });
 };
 
-const getIp = () => {
-  return localStorage.getItem("ip");
+setTimeout(requestData, 1000);
+
+const toggleRec = () => {
+  if (isListening.value) {
+    stopRec();
+  } else {
+    startRec();
+  }
 };
 
-const setIp = (ip) => {
+const stopRec = () => {
+  isListening.value = false;
+  stopListening();
+};
+
+const startRec = async () => {
+  isListening.value = true;
+  const result = await startListening(getLanguage());
+  isListening.value = false;
+  command.value = "Command sent: " + result;
+  showCommand.value = true;
+  ApiService.sendCommand(result).then((data) => {
+    if (data && !data.error) {
+      if (data.type === "temperature") {
+        vocalCommandResponse.header =
+          "The temperature is " + data.value + " °C";
+        vocalCommandResponse.message =
+          "Detected at " +
+          new Date(data.time).toLocaleTimeString("it-IT", {
+            timeZone: "Europe/Rome",
+          });
+        vocalCommandResponse.cssClass = "temperature-alert";
+        showVocalCommandResponse.value = true;
+      } else if (data.type === "light") {
+        vocalCommandResponse.header =
+          "The ambient illumination is " + data.value + " lux";
+        vocalCommandResponse.message =
+          "Detected at " +
+          new Date(data.time).toLocaleTimeString("it-IT", {
+            timeZone: "Europe/Rome",
+          });
+        vocalCommandResponse.cssClass = "light-alert";
+        showVocalCommandResponse.value = true;
+      } else if (data.type === "noise") {
+        vocalCommandResponse.header =
+          "The noise level is " + data.value + " dB";
+        vocalCommandResponse.message =
+          "Detected at " +
+          new Date(data.time).toLocaleTimeString("it-IT", {
+            timeZone: "Europe/Rome",
+          });
+        vocalCommandResponse.cssClass = "noise-alert";
+        showVocalCommandResponse.value = true;
+      } else if (data.executed === "LED_ON") {
+        ledStatus.value = true;
+      } else if (data.executed === "LED_OFF") {
+        ledStatus.value = false;
+      }
+    } else {
+      alertError.header = "Error handling vocal command";
+      alertError.message = `${data?.error || defaultErrorMsg}`;
+      console.error("Error handling vocal request:", alertError.message);
+      showErrorAlert.value = true;
+    }
+  });
+};
+
+const getIp = () => {
+  return localStorage.getItem("ip") || "";
+};
+
+const getLanguage = () => {
+  return localStorage.getItem("language") || "en-US";
+};
+
+const setIpAddress = (ip) => {
   ip = ip.trim();
   const ipRegex =
     /^(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)$/;
@@ -282,98 +391,14 @@ const setIp = (ip) => {
   return true;
 };
 
-requestData();
-
-const toggleRec = () => {
-  if (isListening.value) {
-    stopRec();
-  } else {
-    startRec();
-  }
-};
-
-const startRec = () => {
-  isListening.value = true;
-  let res = Vosk.startRecognition();
-  console.log(res);
-};
-const stopRec = () => {
-  isListening.value = false;
-  let res = Vosk.stopRecognition();
-  console.log(res);
+const setLanguage = (language) => {
+  if (!language) return false;
+  localStorage.setItem("language", language);
+  return true;
 };
 
 onMounted(() => {
-  VoskPlugin.addListener("transcriptionUpdate", (data) => {
-    if (data.transcription) {
-      const parsedObject = JSON.parse(data.transcription);
-      console.log(parsedObject);
-      if (parsedObject) {
-        command.value = "Comando inviato: " + parsedObject.text;
-        showCommand.value = true;
-        ApiService.sendCommand(parsedObject.text).then((data) => {
-          if (data && !data.error) {
-            if (data.type === "temperature") {
-              vocalCommandResponse.header =
-                "The temperature is " + data.value + " °C";
-              vocalCommandResponse.message =
-                "Detected at " +
-                new Date(data.time).toLocaleTimeString("it-IT", {
-                  timeZone: "Europe/Rome",
-                });
-              vocalCommandResponse.cssClass = "temperature-alert";
-              showVocalCommandResponse.value = true;
-            } else if (data.type === "light") {
-              vocalCommandResponse.header =
-                "The ambient illumination is " + data.value + " lux";
-              vocalCommandResponse.message =
-                "Detected at " +
-                new Date(data.time).toLocaleTimeString("it-IT", {
-                  timeZone: "Europe/Rome",
-                });
-              vocalCommandResponse.cssClass = "light-alert";
-              showVocalCommandResponse.value = true;
-            } else if (data.type === "noise") {
-              vocalCommandResponse.header =
-                "The noise level is " + data.value + " dB";
-              vocalCommandResponse.message =
-                "Detected at " +
-                new Date(data.time).toLocaleTimeString("it-IT", {
-                  timeZone: "Europe/Rome",
-                });
-              vocalCommandResponse.cssClass = "noise-alert";
-              showVocalCommandResponse.value = true;
-            } else if (data.executed === "LED_ON") {
-              ledStatus.value = true;
-            } else if (data.executed === "LED_OFF") {
-              ledStatus.value = false;
-            }
-          } else {
-            alertError.header = "Error handling vocal command";
-            alertError.message = `${data?.error || defaultErrorMsg}`;
-            console.error("Error handling vocal request:", alertError.message);
-            showErrorAlert.value = true;
-          }
-        });
-      }
-    }
-    isListening.value = false;
-  });
-
-  VoskPlugin.addListener("permissionGranted", () => {
-    log.value = {
-      message: "Premesso concesso",
-      type: "info",
-    };
-    Vosk.startRecognition();
-  });
-
-  VoskPlugin.addListener("permissionDenied", () => {
-    log.value = {
-      message: "Premesso negato",
-      type: "error",
-    };
-  });
+  requestPermission();
 
   ApiService.getLedStatus().then((data) => {
     if (!data || data.error) {
@@ -385,10 +410,6 @@ onMounted(() => {
     }
     ledStatus.value = data.active;
   });
-});
-
-onUnmounted(() => {
-  VoskPlugin.removeAllListeners();
 });
 </script>
 
