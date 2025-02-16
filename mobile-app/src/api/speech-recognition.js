@@ -10,10 +10,10 @@ export const requestPermission = async () => {
   await SpeechRecognition.requestPermissions();
 };
 
-export const startListening = async () => {
+export const startListening = async (language) => {
   try {
     const result = await SpeechRecognition.start({
-      language: "it-IT",
+      language,
       maxResults: 1,
       prompt: "Parla ora...",
       partialResults: false,
