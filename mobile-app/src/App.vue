@@ -327,8 +327,7 @@ const startRec = async () => {
   ApiService.sendCommand(result).then((data) => {
     if (data && !data.error) {
       if (data.type === "temperature") {
-        vocalCommandResponse.header =
-          "The temperature is " + data.value + " °C";
+        vocalCommandResponse.header = "The temperature is " + data.value + "°C";
         vocalCommandResponse.message =
           "Detected at " +
           new Date(data.time).toLocaleTimeString("it-IT", {
@@ -338,7 +337,7 @@ const startRec = async () => {
         showVocalCommandResponse.value = true;
       } else if (data.type === "light") {
         vocalCommandResponse.header =
-          "The ambient illumination is " + data.value + " lux";
+          "The ambient illumination is " + data.value + "lux";
         vocalCommandResponse.message =
           "Detected at " +
           new Date(data.time).toLocaleTimeString("it-IT", {
@@ -347,8 +346,7 @@ const startRec = async () => {
         vocalCommandResponse.cssClass = "light-alert";
         showVocalCommandResponse.value = true;
       } else if (data.type === "noise") {
-        vocalCommandResponse.header =
-          "The noise level is " + data.value + " dB";
+        vocalCommandResponse.header = "The noise level is " + data.value + "dB";
         vocalCommandResponse.message =
           "Detected at " +
           new Date(data.time).toLocaleTimeString("it-IT", {
