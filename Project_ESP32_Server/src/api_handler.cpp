@@ -88,7 +88,6 @@ String processData(String data)
 
 String processLed(String data)
 {
-
     Serial.print("Led Data to process: ");
     Serial.println(data);
     int firstComma = data.indexOf(',');
