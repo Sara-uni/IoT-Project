@@ -17,10 +17,6 @@ void sendTemperature()
     // Obtain temperature value and convert it into CELSIUS
     float temp = (TMP006_getTemp() - 32) / 1.8;
 
-    // char string[20];
-    // sprintf(string, "%.2f C", temp);
-    // _showText("Temperature:", string);
-
     char tempStr[10];
     snprintf(tempStr, sizeof(tempStr), "%.2f", temp);
 
@@ -33,10 +29,6 @@ void sendTemperature()
 void sendNoise()
 {
     float noise = getNoise();
-
-    // char string[20];
-    // sprintf(string, "%.2f Db", noise);
-    // _showText("Noise:", string);
 
     char valuestr[10];
     snprintf(valuestr, sizeof(valuestr), "%.2f", noise);
@@ -51,10 +43,6 @@ void sendNoise()
 void sendLight()
 {
     float light = 1543.49;
-
-    // char string[20];
-    // sprintf(string, "%.2f lux", light);
-    // _showText("Light:", string);
 
     char valuestr[10];
     snprintf(valuestr, sizeof(valuestr), "%.2f", light);
@@ -104,13 +92,13 @@ int main(void)
             {
                 setColor(255, 255, 255);
                 led = true;
-                UART_sendString("OK\n");
+                UART_sendString("led,OK\n");
             }
             else if (strcmp(command, "LED_OFF") == 0)
             {
                 setColor(0, 0, 0);
                 led = false;
-                UART_sendString("OK\n");
+                UART_sendString("led,OK\n");
             }
             else if (strncmp(command, "SET_COLOR", 9) == 0)
             {
@@ -119,11 +107,11 @@ int main(void)
 
                 setColor(r, g, b);
                 led = true;
-                UART_sendString("OK\n");
+                UART_sendString("setColor,OK\n");
             }
             else if (strcmp(command, "GET_LED") == 0)
             {
-                led ? UART_sendString("true\n") : UART_sendString("false\n");
+                led ? UART_sendString("ledStatus,true\n") : UART_sendString("ledStatus,false\n");
             }
             else if (strncmp(command, "PRINT", 5) == 0)
             {

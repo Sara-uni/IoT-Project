@@ -2,22 +2,43 @@
 #include <ArduinoJson.h>
 #include <HTTPClient.h>
 #include "api_handler.h"
+#include <vector>
 
 // ip server rasa
-// const char *rasaIp = "10.254.254.129";
 const char *rasaIp = "192.168.4.2";
+std::vector<String> responseQueue;
 
-bool waitResponse(int timeoutMs = 1000)
+bool waitResponse(String expectedType, int timeoutMs = 1000)
 {
     unsigned long timeout = millis() + timeoutMs;
-    while (!Serial2.available())
+    while (millis() < timeout)
     {
-        if (millis() > timeout)
+        if (Serial2.available())
         {
-            return false;
+            String receivedData = Serial2.readStringUntil('\n');
+            responseQueue.push_back(receivedData);
+
+            if (receivedData.startsWith(expectedType))
+            {
+                return true;
+            }
         }
     }
-    return true;
+    return false;
+}
+
+String getResponseFromQueue(String expectedType)
+{
+    for (size_t i = 0; i < responseQueue.size(); i++)
+    {
+        if (responseQueue[i].startsWith(expectedType))
+        {
+            String response = responseQueue[i];
+            responseQueue.erase(responseQueue.begin() + i);
+            return response;
+        }
+    }
+    return "";
 }
 
 // get the current time and date using wifi
@@ -67,15 +88,34 @@ String processData(String data)
 
 String processLed(String data)
 {
-    if (data == "true" || data == "false")
+
+    Serial.print("Led Data to process: ");
+    Serial.println(data);
+    int firstComma = data.indexOf(',');
+    if (firstComma == -1)
     {
+        Serial.println("Wrong data format");
         JsonDocument jsonDoc;
-        jsonDoc["active"] = data;
+        jsonDoc["error"] = "Wrong data format";
 
         String formattedData = "";
         serializeJson(jsonDoc, formattedData);
         return formattedData;
     }
+
+    String type = data.substring(0, firstComma);
+    String value = data.substring(firstComma + 1);
+
+    if (value == "true" || value == "false")
+    {
+        JsonDocument jsonDoc;
+        jsonDoc["active"] = value;
+
+        String formattedData = "";
+        serializeJson(jsonDoc, formattedData);
+        return formattedData;
+    }
+
     JsonDocument jsonDoc;
     jsonDoc["error"] = "Wrong data format";
 
@@ -89,7 +129,7 @@ void temperatureHandler(AsyncWebServerRequest *request)
     Serial2.println("GET_TEMP");
     Serial.println("\nSent command: GET_TEMP to MSP432");
 
-    bool getResponse = waitResponse();
+    bool getResponse = waitResponse("temperature");
     if (!getResponse)
     {
         Serial.println("Error: Timeout waiting for response from MSP432.");
@@ -97,7 +137,7 @@ void temperatureHandler(AsyncWebServerRequest *request)
         return;
     }
 
-    String receivedData = Serial2.readStringUntil('\n');
+    String receivedData = getResponseFromQueue("temperature");
     request->send(200, "application/json", processData(receivedData));
 }
 
@@ -106,7 +146,7 @@ void noiseHandler(AsyncWebServerRequest *request)
     Serial2.println("GET_NOISE");
     Serial.println("\nSent command: GET_NOISE to MSP432");
 
-    bool getResponse = waitResponse();
+    bool getResponse = waitResponse("noise");
     if (!getResponse)
     {
         Serial.println("Error: Timeout waiting for response from MSP432.");
@@ -114,7 +154,7 @@ void noiseHandler(AsyncWebServerRequest *request)
         return;
     }
 
-    String receivedData = Serial2.readStringUntil('\n');
+    String receivedData = getResponseFromQueue("noise");
     request->send(200, "application/json", processData(receivedData));
 }
 
@@ -123,7 +163,7 @@ void lightHandler(AsyncWebServerRequest *request)
     Serial2.println("GET_LIGHT");
     Serial.println("\nSent command: GET_LIGHT to MSP432");
 
-    bool getResponse = waitResponse();
+    bool getResponse = waitResponse("light");
     if (!getResponse)
     {
         Serial.println("Error: Timeout waiting for response from MSP432.");
@@ -131,7 +171,7 @@ void lightHandler(AsyncWebServerRequest *request)
         return;
     }
 
-    String receivedData = Serial2.readStringUntil('\n');
+    String receivedData = getResponseFromQueue("light");
     request->send(200, "application/json", processData(receivedData));
 }
 
@@ -140,7 +180,7 @@ void ledOnHandler(AsyncWebServerRequest *request)
     Serial2.println("LED_ON");
     Serial.println("\nSent command: LED_ON to MSP432");
 
-    bool getResponse = waitResponse();
+    bool getResponse = waitResponse("led");
     if (!getResponse)
     {
         Serial.println("Error: Timeout waiting for response from MSP432.");
@@ -148,7 +188,7 @@ void ledOnHandler(AsyncWebServerRequest *request)
         return;
     }
 
-    String receivedData = Serial2.readStringUntil('\n');
+    String receivedData = getResponseFromQueue("led");
     request->send(200, "application/json", "{\"executed\":\"LED_ON\"}");
 }
 
@@ -157,7 +197,7 @@ void ledOffHandler(AsyncWebServerRequest *request)
     Serial2.println("LED_OFF");
     Serial.println("\nSent command: LED_OFF to MSP432");
 
-    bool getResponse = waitResponse();
+    bool getResponse = waitResponse("led");
     if (!getResponse)
     {
         Serial.println("Error: Timeout waiting for response from MSP432.");
@@ -165,7 +205,7 @@ void ledOffHandler(AsyncWebServerRequest *request)
         return;
     }
 
-    String receivedData = Serial2.readStringUntil('\n');
+    String receivedData = getResponseFromQueue("led");
     request->send(200, "application/json", "{\"executed\":\"LED_OFF\"}");
 }
 
@@ -177,7 +217,7 @@ void setColorInternal(AsyncWebServerRequest *request, String command)
     sprintf(string, "\nSent command: %s", command);
     Serial.println(command);
 
-    bool getResponse = waitResponse();
+    bool getResponse = waitResponse("setColor");
     if (!getResponse)
     {
         Serial.println("Error: Timeout waiting for response from MSP432.");
@@ -185,6 +225,7 @@ void setColorInternal(AsyncWebServerRequest *request, String command)
         return;
     }
 
+    String receivedData = getResponseFromQueue("setColor");
     char commandExecuted[256];
     sprintf(commandExecuted, "{\"executed\":\"%s\"}", command);
     request->send(200, "application/json", commandExecuted);
@@ -237,7 +278,7 @@ void getLedStatusHandler(AsyncWebServerRequest *request)
     Serial2.println("GET_LED");
     Serial.println("\nSent command: GET_LED to MSP432");
 
-    bool getResponse = waitResponse();
+    bool getResponse = waitResponse("ledStatus");
     if (!getResponse)
     {
         Serial.println("Error: Timeout waiting for response from MSP432.");
@@ -245,7 +286,7 @@ void getLedStatusHandler(AsyncWebServerRequest *request)
         return;
     }
 
-    String receivedData = Serial2.readStringUntil('\n');
+    String receivedData = getResponseFromQueue("ledStatus");
     request->send(200, "application/json", processLed(receivedData));
 }
 
