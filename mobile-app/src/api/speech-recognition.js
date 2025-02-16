@@ -15,7 +15,7 @@ export const startListening = async (language) => {
     const result = await SpeechRecognition.start({
       language,
       maxResults: 1,
-      prompt: "Parla ora...",
+      prompt: "Talk now..",
       partialResults: false,
     });
     if (result.matches && result.matches.length > 0) return result.matches[0];

@@ -25,7 +25,7 @@
           :options="options"
           ref="chartRef"
         />
-        <p v-else>Non ci sono dati da visualizzare</p>
+        <p v-else>There is no data to display.</p>
       </div>
     </ion-card-content>
   </ion-card>
