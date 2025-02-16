@@ -139,9 +139,13 @@ import {
 import LineChart from "./components/LineChart.vue";
 import ApiService from "./api/request.js";
 import ColorPicker from "./components/ColorPicker.vue";
-import { Vosk } from "./api/vosk.js";
 import { mic, micOff, settingsSharp } from "ionicons/icons";
 import { registerPlugin } from "@capacitor/core";
+import {
+  requestPermission,
+  startListening,
+  stopListening,
+} from "./api/speech-recognition.js";
 
 const VoskPlugin = registerPlugin("VoskPlugin");
 
@@ -292,88 +296,65 @@ const toggleRec = () => {
   }
 };
 
-const startRec = () => {
-  isListening.value = true;
-  let res = Vosk.startRecognition();
-  console.log(res);
-};
 const stopRec = () => {
   isListening.value = false;
-  let res = Vosk.stopRecognition();
-  console.log(res);
+  stopListening();
+};
+
+const startRec = async () => {
+  isListening.value = true;
+  const result = await startListening();
+  isListening.value = false;
+  command.value = "Comando inviato: " + result;
+  showCommand.value = true;
+  ApiService.sendCommand(result).then((data) => {
+    if (data && !data.error) {
+      if (data.type === "temperature") {
+        vocalCommandResponse.header =
+          "The temperature is " + data.value + " °C";
+        vocalCommandResponse.message =
+          "Detected at " +
+          new Date(data.time).toLocaleTimeString("it-IT", {
+            timeZone: "Europe/Rome",
+          });
+        vocalCommandResponse.cssClass = "temperature-alert";
+        showVocalCommandResponse.value = true;
+      } else if (data.type === "light") {
+        vocalCommandResponse.header =
+          "The ambient illumination is " + data.value + " lux";
+        vocalCommandResponse.message =
+          "Detected at " +
+          new Date(data.time).toLocaleTimeString("it-IT", {
+            timeZone: "Europe/Rome",
+          });
+        vocalCommandResponse.cssClass = "light-alert";
+        showVocalCommandResponse.value = true;
+      } else if (data.type === "noise") {
+        vocalCommandResponse.header =
+          "The noise level is " + data.value + " dB";
+        vocalCommandResponse.message =
+          "Detected at " +
+          new Date(data.time).toLocaleTimeString("it-IT", {
+            timeZone: "Europe/Rome",
+          });
+        vocalCommandResponse.cssClass = "noise-alert";
+        showVocalCommandResponse.value = true;
+      } else if (data.executed === "LED_ON") {
+        ledStatus.value = true;
+      } else if (data.executed === "LED_OFF") {
+        ledStatus.value = false;
+      }
+    } else {
+      alertError.header = "Error handling vocal command";
+      alertError.message = `${data?.error || defaultErrorMsg}`;
+      console.error("Error handling vocal request:", alertError.message);
+      showErrorAlert.value = true;
+    }
+  });
 };
 
 onMounted(() => {
-  VoskPlugin.addListener("transcriptionUpdate", (data) => {
-    if (data.transcription) {
-      const parsedObject = JSON.parse(data.transcription);
-      console.log(parsedObject);
-      if (parsedObject) {
-        command.value = "Comando inviato: " + parsedObject.text;
-        showCommand.value = true;
-        ApiService.sendCommand(parsedObject.text).then((data) => {
-          if (data && !data.error) {
-            if (data.type === "temperature") {
-              vocalCommandResponse.header =
-                "The temperature is " + data.value + " °C";
-              vocalCommandResponse.message =
-                "Detected at " +
-                new Date(data.time).toLocaleTimeString("it-IT", {
-                  timeZone: "Europe/Rome",
-                });
-              vocalCommandResponse.cssClass = "temperature-alert";
-              showVocalCommandResponse.value = true;
-            } else if (data.type === "light") {
-              vocalCommandResponse.header =
-                "The ambient illumination is " + data.value + " lux";
-              vocalCommandResponse.message =
-                "Detected at " +
-                new Date(data.time).toLocaleTimeString("it-IT", {
-                  timeZone: "Europe/Rome",
-                });
-              vocalCommandResponse.cssClass = "light-alert";
-              showVocalCommandResponse.value = true;
-            } else if (data.type === "noise") {
-              vocalCommandResponse.header =
-                "The noise level is " + data.value + " dB";
-              vocalCommandResponse.message =
-                "Detected at " +
-                new Date(data.time).toLocaleTimeString("it-IT", {
-                  timeZone: "Europe/Rome",
-                });
-              vocalCommandResponse.cssClass = "noise-alert";
-              showVocalCommandResponse.value = true;
-            } else if (data.executed === "LED_ON") {
-              ledStatus.value = true;
-            } else if (data.executed === "LED_OFF") {
-              ledStatus.value = false;
-            }
-          } else {
-            alertError.header = "Error handling vocal command";
-            alertError.message = `${data?.error || defaultErrorMsg}`;
-            console.error("Error handling vocal request:", alertError.message);
-            showErrorAlert.value = true;
-          }
-        });
-      }
-    }
-    isListening.value = false;
-  });
-
-  VoskPlugin.addListener("permissionGranted", () => {
-    log.value = {
-      message: "Premesso concesso",
-      type: "info",
-    };
-    Vosk.startRecognition();
-  });
-
-  VoskPlugin.addListener("permissionDenied", () => {
-    log.value = {
-      message: "Premesso negato",
-      type: "error",
-    };
-  });
+  requestPermission();
 
   ApiService.getLedStatus().then((data) => {
     if (!data || data.error) {
@@ -385,10 +366,6 @@ onMounted(() => {
     }
     ledStatus.value = data.active;
   });
-});
-
-onUnmounted(() => {
-  VoskPlugin.removeAllListeners();
 });
 </script>
 
