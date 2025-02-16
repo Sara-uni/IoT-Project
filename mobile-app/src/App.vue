@@ -4,11 +4,7 @@
       <ion-toolbar>
         <ion-buttons slot="primary">
           <ion-button id="ip-settings">
-            <ion-icon
-              slot="icon-only"
-              :md="settingsSharp"
-              color="dark"
-            ></ion-icon>
+            <ion-icon slot="icon-only" :md="settingsSharp" color="dark"></ion-icon>
           </ion-button>
         </ion-buttons>
         <ion-title>IoT Dashboard</ion-title>
@@ -18,10 +14,7 @@
       <ion-alert
         trigger="ip-settings"
         header="Insert the IP:"
-        :buttons="[
-          'Cancel',
-          { text: 'Confirm', handler: (data) => setIp(data.ip) },
-        ]"
+        :buttons="['Cancel', { text: 'Confirm', handler: (data) => setIp(data.ip) }]"
         :inputs="[
           {
             name: 'ip',
@@ -61,10 +54,7 @@
               <ion-row>
                 <ion-col>LED Control</ion-col>
                 <ion-col class="flex-right">
-                  <ion-toggle
-                    v-model="ledStatus"
-                    @ionChange="toggleLed"
-                  ></ion-toggle>
+                  <ion-toggle v-model="ledStatus" @ionChange="toggleLed"></ion-toggle>
                 </ion-col>
               </ion-row>
             </ion-grid>
@@ -90,12 +80,7 @@
         cssClass="error-alert"
         @didDismiss="() => (showErrorAlert = false)"
       ></ion-alert>
-      <ion-fab
-        slot="fixed"
-        vertical="bottom"
-        horizontal="end"
-        @click="toggleRec"
-      >
+      <ion-fab slot="fixed" vertical="bottom" horizontal="end" @click="toggleRec">
         <ion-fab-button :color="isListening ? 'danger' : 'dark'">
           <ion-icon v-if="!isListening" :icon="mic"></ion-icon>
           <ion-icon v-else :icon="micOff"></ion-icon>
@@ -140,14 +125,11 @@ import LineChart from "./components/LineChart.vue";
 import ApiService from "./api/request.js";
 import ColorPicker from "./components/ColorPicker.vue";
 import { mic, micOff, settingsSharp } from "ionicons/icons";
-import { registerPlugin } from "@capacitor/core";
 import {
   requestPermission,
   startListening,
   stopListening,
 } from "./api/speech-recognition.js";
-
-const VoskPlugin = registerPlugin("VoskPlugin");
 
 const temperature = {
   labels: [],
@@ -213,12 +195,9 @@ const requestData = async () => {
   let data = await ApiService.getData("temperature");
   if (data && !data.error && data.type == "temperature") {
     lastTemperature.value = data.value;
-    lastTemperatureTime.value = new Date(data.time).toLocaleTimeString(
-      "it-IT",
-      {
-        timeZone: "Europe/Rome",
-      }
-    );
+    lastTemperatureTime.value = new Date(data.time).toLocaleTimeString("it-IT", {
+      timeZone: "Europe/Rome",
+    });
   } else {
     console.error("Error receiving temperature");
   }
@@ -275,8 +254,7 @@ const getIp = () => {
 
 const setIp = (ip) => {
   ip = ip.trim();
-  const ipRegex =
-    /^(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)$/;
+  const ipRegex = /^(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)$/;
   if (!ipRegex.test(ip)) {
     alert("⚠️ Insert a valid IPv4 address!");
     return false;
@@ -310,8 +288,7 @@ const startRec = async () => {
   ApiService.sendCommand(result).then((data) => {
     if (data && !data.error) {
       if (data.type === "temperature") {
-        vocalCommandResponse.header =
-          "The temperature is " + data.value + " °C";
+        vocalCommandResponse.header = "The temperature is " + data.value + " °C";
         vocalCommandResponse.message =
           "Detected at " +
           new Date(data.time).toLocaleTimeString("it-IT", {
@@ -330,8 +307,7 @@ const startRec = async () => {
         vocalCommandResponse.cssClass = "light-alert";
         showVocalCommandResponse.value = true;
       } else if (data.type === "noise") {
-        vocalCommandResponse.header =
-          "The noise level is " + data.value + " dB";
+        vocalCommandResponse.header = "The noise level is " + data.value + " dB";
         vocalCommandResponse.message =
           "Detected at " +
           new Date(data.time).toLocaleTimeString("it-IT", {
