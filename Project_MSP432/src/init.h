@@ -5,6 +5,8 @@ void  _temperatureSensorInit();
 
 void _micInit();
 
+void _lightSensorInit();
+
 void _graphicsInit();
 
 void _hwInit();

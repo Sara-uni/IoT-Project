@@ -3,6 +3,7 @@
 #include <ti/grlib/grlib.h>
 #include "HAL_I2C.h"
 #include "HAL_TMP006.h"
+#include "HAL_OPT3001.h"
 #include <stdio.h>
 #include <uart.h>
 #include <init.h>
@@ -42,7 +43,7 @@ void sendNoise()
 
 void sendLight()
 {
-    float light = 1543.49;
+    float light = OPT3001_getLux();
 
     char valuestr[10];
     snprintf(valuestr, sizeof(valuestr), "%.2f", light);

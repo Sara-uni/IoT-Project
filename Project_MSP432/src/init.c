@@ -6,6 +6,7 @@
 #include "LcdDriver/HAL_MSP_EXP432P401R_Crystalfontz128x128_ST7735.h"
 #include "HAL_I2C.h"
 #include "HAL_TMP006.h"
+#include "HAL_OPT3001.h"
 #include <stdio.h>
 
 //-----------------TEMPERATURE---------------------------
@@ -48,6 +49,21 @@ void _micInit()
 
     /* Enable ADC conversion */
     ADC14_enableConversion();
+}
+
+//-----------------LIGHTSENSOR-----------------------
+
+void _lightSensorInit()
+{
+    /* Initialize I2C communication */
+    Init_I2C_GPIO();
+    I2C_init();
+
+    /* Initialize OPT3001 digital ambient light sensor */
+    OPT3001_init();
+
+    __delay_cycles(100000);
+
 }
 
 //---------------------------------------------------
@@ -98,6 +114,7 @@ void _hwInit()
     _graphicsInit();
     _temperatureSensorInit();
     _micInit();
+    _lightSensorInit();
     _uartInit();
     _ledInit();
 
