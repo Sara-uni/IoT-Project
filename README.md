@@ -123,8 +123,8 @@ IoT-Project
     └── rasa-venv        # The virtual environment for the dependency
 ```
 
-#### Contact us
-Sara Mattiato: sara.mattiato@studenti.unitn.it
-Mattia Demattè: mattia.dematte-1@studenti.unitn.it
-Giacomo Saltori: giacomo.saltori-1@studenti.unitn.it
-Davide Valer: davide.valer@studenti.unitn.it
+## Contact us
+- Sara Mattiato: sara.mattiato@studenti.unitn.it
+- Mattia Demattè: mattia.dematte-1@studenti.unitn.it
+- Giacomo Saltori: giacomo.saltori-1@studenti.unitn.it
+- Davide Valer: davide.valer@studenti.unitn.it
