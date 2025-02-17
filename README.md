@@ -123,6 +123,10 @@ IoT-Project
     └── rasa-venv        # The virtual environment for the dependency
 ```
 
+##Links
+- [Presentation](https://www.canva.com/design/DAGe_0WdLVo/Ztw9e-zOjCTN698uUK25cw/view?utm_content=DAGe_0WdLVo&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=h30a90ed210)
+- [Video](https://www.youtube.com/watch?v=IcFuhcX74IY)
+
 ## Contact us
 - Sara Mattiato: sara.mattiato@studenti.unitn.it
 - Mattia Demattè: mattia.dematte-1@studenti.unitn.it
